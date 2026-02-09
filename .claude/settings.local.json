@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -NoProfile -Command \"Get-Item -Path ''c:\\\\Users\\\\sb\\\\Documents\\\\GitHub\\\\Asset_System'' -Force | Select-Object -ExpandProperty Attributes\")",
+      "Bash(sqlite3:*)",
+      "Bash(curl:*)",
+      "Bash(npx prisma db push)",
+      "Bash(npx prisma generate:*)",
+      "Bash(npm run build)"
+    ]
+  }
+}

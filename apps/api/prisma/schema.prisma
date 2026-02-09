@@ -1,0 +1,237 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============ CORE ENTITIES ============
+
+model Asset {
+  id                  String    @id @default(cuid())
+
+  // Identification
+  itemNumber          String    @unique @map("item_number")
+  serialNumber        String?   @map("serial_number")
+
+  // Product Information
+  manufacturer        Manufacturer? @relation(fields: [manufacturerId], references: [id])
+  manufacturerId      String?   @map("manufacturer_id")
+  model               String?
+  category            Category? @relation(fields: [categoryId], references: [id])
+  categoryId          String?   @map("category_id")
+  description         String?
+
+  // Status & Condition
+  status              String    @default("In Use")
+  condition           String    @default("GOOD")
+
+  // Purchase Information
+  acquiredDate        DateTime? @map("acquired_date")
+  purchasePrice       Float?    @map("purchase_price")
+  supplier            Supplier? @relation(fields: [supplierId], references: [id])
+  supplierId          String?   @map("supplier_id")
+  orderNumber         String?   @map("order_number")
+
+  // Device Details (IT-specific)
+  hostname            String?
+  deviceUsername      String?   @map("device_username")
+  devicePassword      String?   @map("device_password")
+  lanMacAddress       String?   @map("lan_mac_address")
+  wlanMacAddress      String?   @map("wlan_mac_address")
+  ipAddress           String?   @map("ip_address")
+
+  // Assignment
+  assignedTo          String?   @map("assigned_to")
+  location            Location? @relation(fields: [locationId], references: [id])
+  locationId          String?   @map("location_id")
+
+  // Lifecycle Dates
+  warrantyExpiration  DateTime? @map("warranty_expiration")
+  endOfLifeDate       DateTime? @map("end_of_life_date")
+  lastReviewDate      DateTime? @map("last_review_date")
+  decommissionDate    DateTime? @map("decommission_date")
+
+  // Documentation
+  comments            String?
+
+  // Legacy ID from Access database
+  legacyId            Int?      @map("legacy_id")
+
+  // Metadata
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  attachments         Attachment[]
+  auditLogs           AuditLog[]
+  stocktakeRecords    StocktakeRecord[]
+
+  @@map("assets")
+}
+
+// ============ LOOKUP TABLES ============
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  assets      Asset[]
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("categories")
+}
+
+model Manufacturer {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  website     String?
+  supportUrl  String?  @map("support_url")
+  contactInfo String?  @map("contact_info")
+  assets      Asset[]
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("manufacturers")
+}
+
+model Supplier {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  website     String?
+  contactInfo String?  @map("contact_info")
+  accountNum  String?  @map("account_number")
+  assets      Asset[]
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("suppliers")
+}
+
+model Location {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  building    String?
+  floor       String?
+  room        String?
+  address     String?
+  assets      Asset[]
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("locations")
+}
+
+// ============ ATTACHMENTS ============
+
+model Attachment {
+  id          String   @id @default(cuid())
+  asset       Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  assetId     String   @map("asset_id")
+  filename    String
+  originalName String  @map("original_name")
+  mimeType    String   @map("mime_type")
+  size        Int
+  storagePath String   @map("storage_path")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("attachments")
+}
+
+// ============ SAVED FILTERS ============
+
+model SavedFilter {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  filterConfig String  @map("filter_config")
+  sortConfig  String?  @map("sort_config")
+  isDefault   Boolean  @default(false) @map("is_default")
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("saved_filters")
+}
+
+// ============ STOCKTAKE ============
+
+model Stocktake {
+  id          String   @id @default(cuid())
+  name        String
+  startDate   DateTime @map("start_date")
+  endDate     DateTime? @map("end_date")
+  status      String   @default("IN_PROGRESS")
+  notes       String?
+  records     StocktakeRecord[]
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("stocktakes")
+}
+
+model StocktakeRecord {
+  id          String   @id @default(cuid())
+  stocktake   Stocktake @relation(fields: [stocktakeId], references: [id], onDelete: Cascade)
+  stocktakeId String   @map("stocktake_id")
+  asset       Asset    @relation(fields: [assetId], references: [id])
+  assetId     String   @map("asset_id")
+  verified    Boolean  @default(false)
+  verifiedAt  DateTime? @map("verified_at")
+  locationMatch Boolean? @map("location_match")
+  conditionMatch Boolean? @map("condition_match")
+  newCondition String?  @map("new_condition")
+  notes       String?
+
+  @@unique([stocktakeId, assetId])
+  @@map("stocktake_records")
+}
+
+// ============ AUDIT LOG ============
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  asset       Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  assetId     String   @map("asset_id")
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId      String?  @map("user_id")
+  action      String
+  changes     String?
+  ipAddress   String?  @map("ip_address")
+  timestamp   DateTime @default(now())
+
+  @@map("audit_logs")
+}
+
+// ============ SETTINGS ============
+
+model Settings {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("settings")
+}
+
+// ============ USERS ============
+
+model User {
+  id           String    @id @default(cuid())
+  username     String    @unique
+  passwordHash String    @map("password_hash")
+  fullName     String    @map("full_name")
+  role         String    @default("USER")
+  isActive     Boolean   @default(true) @map("is_active")
+  lastLogin    DateTime? @map("last_login")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  auditLogs    AuditLog[]
+
+  @@map("users")
+}
