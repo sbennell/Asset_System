@@ -17,12 +17,14 @@ export interface LabelAsset {
   serialNumber?: string | null;
   model?: string | null;
   hostname?: string | null;
+  assignedTo?: string | null;
   manufacturer?: { name: string } | null;
   organizationName?: string | null;
 }
 
 export interface LabelSettings {
   printerName: string;
+  showAssignedTo: boolean;
   showModel: boolean;
   showHostname: boolean;
   showSerialNumber: boolean;
@@ -30,6 +32,7 @@ export interface LabelSettings {
 
 const DEFAULT_SETTINGS: LabelSettings = {
   printerName: 'Brother QL-500',
+  showAssignedTo: true,
   showModel: true,
   showHostname: true,
   showSerialNumber: true,
@@ -108,34 +111,34 @@ export async function createLabelPDF(
   const textX = qrX + qrSize + 6;
   let textY = LABEL_HEIGHT_PT - 14;
 
-  // Item Number (bold, larger)
-  page.drawText(truncateText(asset.itemNumber, 18), {
+  // Assigned To name (bold, at top)
+  if (opts.showAssignedTo && asset.assignedTo) {
+    page.drawText(truncateText(asset.assignedTo, 20), {
+      x: textX,
+      y: textY,
+      size: 10,
+      font: boldFont,
+      color: rgb(0, 0, 0),
+    });
+    textY -= 12;
+  }
+
+  // Item Number with prefix
+  page.drawText(truncateText(`Item:${asset.itemNumber}`, 22), {
     x: textX,
     y: textY,
-    size: 11,
+    size: 9,
     font: boldFont,
     color: rgb(0, 0, 0),
   });
-  textY -= 14;
+  textY -= 12;
 
   // Model (with manufacturer if available)
   if (opts.showModel && asset.model) {
     const modelText = asset.manufacturer?.name
       ? `${asset.manufacturer.name} ${asset.model}`
       : asset.model;
-    page.drawText(truncateText(modelText, 22), {
-      x: textX,
-      y: textY,
-      size: 8,
-      font: regularFont,
-      color: rgb(0, 0, 0),
-    });
-    textY -= 11;
-  }
-
-  // Hostname
-  if (opts.showHostname && asset.hostname) {
-    page.drawText(truncateText(asset.hostname, 22), {
+    page.drawText(truncateText(modelText, 24), {
       x: textX,
       y: textY,
       size: 8,
@@ -147,12 +150,12 @@ export async function createLabelPDF(
 
   // Serial Number
   if (opts.showSerialNumber && asset.serialNumber) {
-    page.drawText(truncateText(`SN: ${asset.serialNumber}`, 24), {
+    page.drawText(truncateText(`S/N:${asset.serialNumber}`, 24), {
       x: textX,
       y: textY,
-      size: 7,
+      size: 8,
       font: regularFont,
-      color: rgb(0.3, 0.3, 0.3),
+      color: rgb(0, 0, 0),
     });
   }
 
@@ -268,6 +271,7 @@ export function parseSettings(
 
   return {
     printerName: get('label.printerName') || DEFAULT_SETTINGS.printerName,
+    showAssignedTo: get('label.showAssignedTo') !== 'false',
     showModel: get('label.showModel') !== 'false',
     showHostname: get('label.showHostname') !== 'false',
     showSerialNumber: get('label.showSerialNumber') !== 'false',
@@ -282,6 +286,9 @@ export function settingsToKeyValue(settings: Partial<LabelSettings>): Record<str
 
   if (settings.printerName !== undefined) {
     result['label.printerName'] = settings.printerName;
+  }
+  if (settings.showAssignedTo !== undefined) {
+    result['label.showAssignedTo'] = String(settings.showAssignedTo);
   }
   if (settings.showModel !== undefined) {
     result['label.showModel'] = String(settings.showModel);

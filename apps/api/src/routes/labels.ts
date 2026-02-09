@@ -45,7 +45,7 @@ router.post('/print/:assetId', requireAuth, async (req: Request, res: Response) 
   try {
     const prisma = req.app.locals.prisma as PrismaClient;
     const assetId = req.params.assetId as string;
-    const { copies = 1 } = req.body;
+    const { copies = 1, showAssignedTo, showModel, showSerialNumber } = req.body;
 
     const asset = await prisma.asset.findUnique({
       where: { id: assetId },
@@ -59,7 +59,7 @@ router.post('/print/:assetId', requireAuth, async (req: Request, res: Response) 
     // Get label settings and organization name
     const settingsRecords = await prisma.settings.findMany({
       where: {
-        key: { in: ['label.printerName', 'label.showModel', 'label.showHostname', 'label.showSerialNumber', 'organization'] },
+        key: { in: ['label.printerName', 'label.showAssignedTo', 'label.showModel', 'label.showHostname', 'label.showSerialNumber', 'organization'] },
       },
     });
     const settingsMap: Record<string, string> = {};
@@ -69,9 +69,17 @@ router.post('/print/:assetId', requireAuth, async (req: Request, res: Response) 
     const settings = parseSettings(settingsMap);
     const organizationName = settingsMap['organization'] || null;
 
+    // Override settings from request body if provided
+    const finalSettings = {
+      ...settings,
+      ...(showAssignedTo !== undefined && { showAssignedTo }),
+      ...(showModel !== undefined && { showModel }),
+      ...(showSerialNumber !== undefined && { showSerialNumber }),
+    };
+
     // Generate and print label
     const labelAsset: LabelAsset = { ...asset, organizationName };
-    const pdfBytes = await createLabelPDF(labelAsset, settings);
+    const pdfBytes = await createLabelPDF(labelAsset, finalSettings);
 
     for (let i = 0; i < copies; i++) {
       await printLabel(pdfBytes, settings.printerName);
@@ -103,7 +111,7 @@ router.post('/print-batch', requireAuth, async (req: Request, res: Response) => 
     // Get label settings and organization name
     const settingsRecords = await prisma.settings.findMany({
       where: {
-        key: { in: ['label.printerName', 'label.showModel', 'label.showHostname', 'label.showSerialNumber', 'organization'] },
+        key: { in: ['label.printerName', 'label.showAssignedTo', 'label.showModel', 'label.showHostname', 'label.showSerialNumber', 'organization'] },
       },
     });
     const settingsMap: Record<string, string> = {};
@@ -235,6 +243,11 @@ router.get('/download/:assetId', requireAuth, async (req: Request, res: Response
     const prisma = req.app.locals.prisma as PrismaClient;
     const assetId = req.params.assetId as string;
 
+    // Get optional query params for settings override
+    const showAssignedTo = req.query.showAssignedTo !== undefined ? req.query.showAssignedTo === 'true' : undefined;
+    const showModel = req.query.showModel !== undefined ? req.query.showModel === 'true' : undefined;
+    const showSerialNumber = req.query.showSerialNumber !== undefined ? req.query.showSerialNumber === 'true' : undefined;
+
     const asset = await prisma.asset.findUnique({
       where: { id: assetId },
       include: { manufacturer: true },
@@ -247,7 +260,7 @@ router.get('/download/:assetId', requireAuth, async (req: Request, res: Response
     // Get label settings and organization name
     const settingsRecords = await prisma.settings.findMany({
       where: {
-        key: { in: ['label.printerName', 'label.showModel', 'label.showHostname', 'label.showSerialNumber', 'organization'] },
+        key: { in: ['label.printerName', 'label.showAssignedTo', 'label.showModel', 'label.showHostname', 'label.showSerialNumber', 'organization'] },
       },
     });
     const settingsMap: Record<string, string> = {};
@@ -257,8 +270,16 @@ router.get('/download/:assetId', requireAuth, async (req: Request, res: Response
     const settings = parseSettings(settingsMap);
     const organizationName = settingsMap['organization'] || null;
 
+    // Override settings from query params if provided
+    const finalSettings = {
+      ...settings,
+      ...(showAssignedTo !== undefined && { showAssignedTo }),
+      ...(showModel !== undefined && { showModel }),
+      ...(showSerialNumber !== undefined && { showSerialNumber }),
+    };
+
     const labelAsset: LabelAsset = { ...asset, organizationName };
-    const pdfBytes = await createLabelPDF(labelAsset, settings);
+    const pdfBytes = await createLabelPDF(labelAsset, finalSettings);
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="label-${asset.itemNumber}.pdf"`);

@@ -351,6 +351,16 @@ function LabelSettingsSection() {
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
+                  checked={settings?.showAssignedTo ?? true}
+                  onChange={(e) => handleToggle('showAssignedTo', e.target.checked)}
+                  disabled={mutation.isPending}
+                  className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                />
+                <span className="text-sm text-gray-700">Show Assigned To</span>
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
                   checked={settings?.showModel ?? true}
                   onChange={(e) => handleToggle('showModel', e.target.checked)}
                   disabled={mutation.isPending}

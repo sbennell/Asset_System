@@ -120,6 +120,7 @@ export interface ImportResult {
 
 export interface LabelSettings {
   printerName: string;
+  showAssignedTo: boolean;
   showModel: boolean;
   showHostname: boolean;
   showSerialNumber: boolean;
@@ -310,10 +311,10 @@ export const api = {
   // Labels
   getLabelPreviewUrl: (assetId: string) => `${API_BASE}/labels/preview/${assetId}`,
   downloadLabelUrl: (assetId: string) => `${API_BASE}/labels/download/${assetId}`,
-  printLabel: (assetId: string, copies?: number) =>
+  printLabel: (assetId: string, copies?: number, settings?: Partial<LabelSettings>) =>
     fetchJson<PrintResult>(`/labels/print/${assetId}`, {
       method: 'POST',
-      body: JSON.stringify({ copies: copies || 1 })
+      body: JSON.stringify({ copies: copies || 1, ...settings })
     }),
   printLabelsBatch: (assetIds: string[], copies?: number) =>
     fetchJson<BatchPrintResult>('/labels/print-batch', {
