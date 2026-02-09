@@ -67,6 +67,32 @@ export async function generateBarcode(text: string): Promise<Buffer> {
 }
 
 /**
+ * Build QR code content with all label info
+ */
+function buildQRContent(asset: LabelAsset, opts: LabelSettings): string {
+  const lines: string[] = [];
+
+  if (opts.showAssignedTo && asset.assignedTo) {
+    lines.push(asset.assignedTo);
+  }
+  lines.push(`Item:${asset.itemNumber}`);
+  if (opts.showModel && asset.model) {
+    const modelText = asset.manufacturer?.name
+      ? `${asset.manufacturer.name} ${asset.model}`
+      : asset.model;
+    lines.push(modelText);
+  }
+  if (opts.showSerialNumber && asset.serialNumber) {
+    lines.push(`S/N:${asset.serialNumber}`);
+  }
+  if (asset.organizationName) {
+    lines.push(asset.organizationName);
+  }
+
+  return lines.join('\n');
+}
+
+/**
  * Create a label PDF for an asset
  * Landscape PDF (62mm x 29mm) with QR on left, text on right
  * Brother QL driver handles rotation for 29mm tape
@@ -77,8 +103,9 @@ export async function createLabelPDF(
 ): Promise<Uint8Array> {
   const opts = { ...DEFAULT_SETTINGS, ...settings };
 
-  // Generate QR code containing the item number
-  const qrBuffer = await generateQRCode(asset.itemNumber, 150);
+  // Generate QR code containing all label information
+  const qrContent = buildQRContent(asset, opts);
+  const qrBuffer = await generateQRCode(qrContent, 150);
 
   // Create PDF document - landscape orientation (62mm x 29mm)
   const doc = await PDFDocument.create();
