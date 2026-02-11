@@ -1,6 +1,6 @@
 # Asset Management System
 
-**Version 1.2.0**
+**Version 1.2.1**
 
 A web-based IT asset management system for tracking hardware, software, and equipment inventory. Built with React, Express, and SQLite.
 
@@ -122,18 +122,54 @@ npx prisma generate
 npx prisma db push
 ```
 
-4. Start the development server:
+5. Start the development server:
 ```bash
 npm run dev
 ```
 
-5. Open http://localhost:5173 in your browser
+6. Open http://localhost:5173 in your browser
 
 ### Default Login
 - **Username**: admin
 - **Password**: admin123
 
 *Change the default password after first login!*
+
+## Updating
+
+### Automatic Update (Production)
+Run the update script as Administrator on the server:
+```powershell
+.\update.ps1
+```
+
+The script will:
+- Check GitHub for available updates
+- Back up the database before updating
+- Pull latest code from GitHub
+- Install/update dependencies
+- Run database migrations
+- Rebuild the application
+- Restart the Windows service
+
+Options:
+```powershell
+.\update.ps1 -InstallPath "D:\AssetSystem"   # Custom install path
+.\update.ps1 -Branch "develop"                # Pull from a different branch
+.\update.ps1 -SkipBackup                      # Skip database backup
+.\update.ps1 -SkipService                     # Skip service restart
+```
+
+### Manual Update (Development)
+```bash
+git pull origin main
+npm install
+cd apps/api
+npx prisma generate
+npx prisma db push
+cd ../..
+npm run build
+```
 
 ## Configuration
 

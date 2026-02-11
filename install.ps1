@@ -47,7 +47,6 @@ Write-Host @"
 
 ============================================
   Asset Management System Installer
-  Windows Server Edition
 ============================================
 
 "@ -ForegroundColor Cyan
@@ -127,33 +126,41 @@ foreach ($item in $itemsToCopy) {
 }
 Write-Success "Application files copied"
 
+# Helper: run a command via cmd.exe, check exit code, ignore stderr warnings
+# Uses cmd.exe /c so that .cmd batch files (npm, npx) work correctly on Windows
+function Invoke-NativeCommand {
+    param(
+        [string]$Command,
+        [string]$StepName,
+        [string]$WorkDir
+    )
+    $stdoutLog = "$InstallPath\logs\_install_stdout.tmp"
+    $stderrLog = "$InstallPath\logs\_install_stderr.tmp"
+    $process = Start-Process -FilePath "cmd.exe" -ArgumentList "/c $Command" -WorkingDirectory $WorkDir -NoNewWindow -Wait -PassThru -RedirectStandardOutput $stdoutLog -RedirectStandardError $stderrLog
+    if ($process.ExitCode -ne 0) {
+        $stderr = Get-Content $stderrLog -Raw -ErrorAction SilentlyContinue
+        Write-Error "$StepName failed (exit code $($process.ExitCode))"
+        if ($stderr) { Write-Host "   $stderr" -ForegroundColor Red }
+        return $false
+    }
+    return $true
+}
+
 # Install dependencies
 Write-Step "Installing dependencies (this may take a few minutes)..."
 
-Push-Location "$InstallPath\app"
-try {
-    npm install 2>&1 | Out-Null
-    Write-Success "Dependencies installed"
-} catch {
-    Write-Error "Failed to install dependencies: $_"
-    Pop-Location
+if (-not (Invoke-NativeCommand -Command "npm install" -StepName "npm install" -WorkDir "$InstallPath\app")) {
     exit 1
 }
-Pop-Location
+Write-Success "Dependencies installed"
 
 # Generate Prisma client
 Write-Step "Generating Prisma client..."
 
-Push-Location "$InstallPath\app\apps\api"
-try {
-    npx prisma generate 2>&1 | Out-Null
-    Write-Success "Prisma client generated"
-} catch {
-    Write-Error "Failed to generate Prisma client: $_"
-    Pop-Location
+if (-not (Invoke-NativeCommand -Command "npx prisma generate" -StepName "prisma generate" -WorkDir "$InstallPath\app\apps\api")) {
     exit 1
 }
-Pop-Location
+Write-Success "Prisma client generated"
 
 # Create environment file
 Write-Step "Creating environment configuration..."
@@ -174,30 +181,18 @@ Write-Success "Environment file created: $envPath"
 # Build application
 Write-Step "Building application..."
 
-Push-Location "$InstallPath\app"
-try {
-    npm run build 2>&1 | Out-Null
-    Write-Success "Application built successfully"
-} catch {
-    Write-Error "Failed to build application: $_"
-    Pop-Location
+if (-not (Invoke-NativeCommand -Command "npm run build" -StepName "npm run build" -WorkDir "$InstallPath\app")) {
     exit 1
 }
-Pop-Location
+Write-Success "Application built successfully"
 
 # Initialize database
 Write-Step "Initializing database..."
 
-Push-Location "$InstallPath\app\apps\api"
-try {
-    npx prisma db push --skip-generate 2>&1 | Out-Null
-    Write-Success "Database initialized: $InstallPath\data\asset_system.db"
-} catch {
-    Write-Error "Failed to initialize database: $_"
-    Pop-Location
+if (-not (Invoke-NativeCommand -Command "npx prisma db push --skip-generate" -StepName "prisma db push" -WorkDir "$InstallPath\app\apps\api")) {
     exit 1
 }
-Pop-Location
+Write-Success "Database initialized: $InstallPath\data\asset_system.db"
 
 # Configure firewall
 Write-Step "Configuring Windows Firewall..."

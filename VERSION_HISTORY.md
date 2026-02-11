@@ -4,6 +4,24 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.2.1] - 2025-02-11
+
+### New Features
+
+- **Version Update Check**: Automatically checks GitHub for newer versions
+  - Compares current app version against latest in VERSION_HISTORY.md on GitHub
+  - Shows animated notification badge in sidebar when an update is available
+  - Links to GitHub releases page for easy download
+  - Checks once per hour in the background
+- **Version Link**: Version number in sidebar now links to VERSION_HISTORY.md on GitHub
+- **Update Script**: Added `update.ps1` PowerShell script for one-command updates from GitHub
+  - Checks for available updates before proceeding
+  - Automatic database backup before updating
+  - Pulls latest code, installs dependencies, rebuilds, and restarts service
+  - Supports custom install path, branch selection, and skip options
+
+---
+
 ## [1.2.0] - 2025-02-11
 
 ### Security Enhancement

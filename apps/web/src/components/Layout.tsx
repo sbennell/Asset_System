@@ -14,6 +14,7 @@ import { useState } from 'react';
 import { api } from '../lib/api';
 import { cn } from '../lib/utils';
 import { useAuth } from '../App';
+import { useVersionCheck, APP_VERSION } from '../lib/useVersionCheck';
 
 const navigation = [
   { name: 'Assets', href: '/assets', icon: Package },
@@ -27,6 +28,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user } = useAuth();
+  const { data: versionCheck } = useVersionCheck();
 
   const logoutMutation = useMutation({
     mutationFn: api.logout,
@@ -118,7 +120,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
           {/* Version */}
           <div className="px-4 py-2 border-t border-gray-200">
-            <p className="text-xs text-gray-400 text-center">Version 1.2.0</p>
+            <a href="https://github.com/sbennell/Asset_System/blob/main/VERSION_HISTORY.md" target="_blank" rel="noopener noreferrer" className="text-xs text-gray-400 hover:text-primary-600 text-center block">
+              Version {APP_VERSION}
+            </a>
+            {versionCheck?.updateAvailable && (
+              <a
+                href="https://github.com/sbennell/Asset_System/releases"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1 flex items-center justify-center gap-1 text-xs text-amber-600 hover:text-amber-700 bg-amber-50 rounded-md px-2 py-1"
+              >
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                </span>
+                v{versionCheck.latestVersion} available
+              </a>
+            )}
           </div>
         </div>
       </div>
