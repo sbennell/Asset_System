@@ -37,3 +37,4 @@ uploads/
 *.accdb
 *.mdb
 *.laccdb
+Asset_System/csv-export/Assets*.csv
