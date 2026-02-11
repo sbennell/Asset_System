@@ -5,6 +5,7 @@
 
 .DESCRIPTION
     This script automates the installation of the Asset Management System including:
+    - Cloning the repository from GitHub
     - Creating directory structure
     - Installing dependencies
     - Building the application
@@ -18,6 +19,9 @@
 .PARAMETER Port
     Port for the application. Default: 3001
 
+.PARAMETER Branch
+    Git branch to install from. Default: main
+
 .PARAMETER SkipService
     Skip Windows service installation (for manual testing)
 
@@ -26,15 +30,20 @@
 
 .EXAMPLE
     .\install.ps1 -InstallPath "D:\AssetSystem" -Port 8080
+
+.EXAMPLE
+    .\install.ps1 -Branch "develop"
 #>
 
 param(
     [string]$InstallPath = "C:\AssetSystem",
     [int]$Port = 3001,
+    [string]$Branch = "main",
     [switch]$SkipService
 )
 
 $ErrorActionPreference = "Stop"
+$RepoUrl = "https://github.com/sbennell/Asset_System.git"
 
 # Colors for output
 function Write-Step { param($msg) Write-Host "`n>> $msg" -ForegroundColor Cyan }
@@ -52,11 +61,27 @@ Write-Host @"
 "@ -ForegroundColor Cyan
 
 Write-Host "Install Path: $InstallPath"
-Write-Host "Port: $Port"
+Write-Host "Port:         $Port"
+Write-Host "Branch:       $Branch"
+Write-Host "Repository:   $RepoUrl"
 Write-Host ""
 
 # Check prerequisites
 Write-Step "Checking prerequisites..."
+
+# Check Git
+try {
+    $gitVersion = git --version 2>$null
+    if ($gitVersion) {
+        Write-Success "Git found: $gitVersion"
+    } else {
+        throw "Git not found"
+    }
+} catch {
+    Write-Error "Git is not installed!"
+    Write-Host "   Please install Git from https://git-scm.com/"
+    exit 1
+}
 
 # Check Node.js
 try {
@@ -81,15 +106,18 @@ try {
     exit 1
 }
 
-# Get script location (where the app source is)
-$SourcePath = Split-Path -Parent $MyInvocation.MyCommand.Path
-Write-Success "Source path: $SourcePath"
+# Check if already installed
+if (Test-Path "$InstallPath\app\.git") {
+    Write-Error "Asset System is already installed at $InstallPath"
+    Write-Host "   To update, run: .\update.ps1 -InstallPath `"$InstallPath`""
+    Write-Host "   To reinstall, remove the directory first: Remove-Item `"$InstallPath`" -Recurse"
+    exit 1
+}
 
 # Create directory structure
 Write-Step "Creating directory structure..."
 
 $directories = @(
-    "$InstallPath\app",
     "$InstallPath\data",
     "$InstallPath\logs",
     "$InstallPath\backups"
@@ -104,27 +132,36 @@ foreach ($dir in $directories) {
     }
 }
 
-# Copy application files
-Write-Step "Copying application files..."
+# Clone repository
+Write-Step "Cloning repository from GitHub..."
 
-$excludeDirs = @("node_modules", ".git", "backups", "logs")
-$excludeFiles = @("*.db", "*.log")
+if (Test-Path "$InstallPath\app") {
+    Remove-Item "$InstallPath\app" -Recurse -Force
+}
 
-# Copy files excluding node_modules and other large directories
-$itemsToCopy = Get-ChildItem -Path $SourcePath -Exclude $excludeDirs
-foreach ($item in $itemsToCopy) {
-    $destPath = Join-Path "$InstallPath\app" $item.Name
-    if ($item.PSIsContainer) {
-        if ($item.Name -notin $excludeDirs) {
-            Copy-Item -Path $item.FullName -Destination $destPath -Recurse -Force
-        }
-    } else {
-        if ($item.Extension -notin @(".db", ".log")) {
-            Copy-Item -Path $item.FullName -Destination $destPath -Force
-        }
+try {
+    git clone --branch $Branch --single-branch $RepoUrl "$InstallPath\app" 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        throw "git clone failed"
+    }
+    Write-Success "Repository cloned (branch: $Branch)"
+} catch {
+    Write-Error "Failed to clone repository!"
+    Write-Host "   URL: $RepoUrl"
+    Write-Host "   Check your internet connection and that the repository is accessible."
+    exit 1
+}
+
+# Get version info
+$versionHistory = "$InstallPath\app\VERSION_HISTORY.md"
+$installedVersion = "unknown"
+if (Test-Path $versionHistory) {
+    $match = Select-String -Path $versionHistory -Pattern '##\s*\[(\d+\.\d+\.\d+)\]' | Select-Object -First 1
+    if ($match) {
+        $installedVersion = $match.Matches[0].Groups[1].Value
     }
 }
-Write-Success "Application files copied"
+Write-Success "Version: $installedVersion"
 
 # Helper: run a command via cmd.exe, check exit code, ignore stderr warnings
 # Uses cmd.exe /c so that .cmd batch files (npm, npx) work correctly on Windows
@@ -319,6 +356,9 @@ Write-Host @"
 
 "@ -ForegroundColor Green
 
+Write-Host "Version:         " -NoNewline
+Write-Host "v$installedVersion" -ForegroundColor Yellow
+
 Write-Host "Application URL: " -NoNewline
 Write-Host "http://${ipAddress}:$Port" -ForegroundColor Yellow
 
@@ -344,6 +384,10 @@ Write-Host "  Status:  " -NoNewline -ForegroundColor Gray
 Write-Host "Get-Service AssetSystem"
 
 Write-Host ""
-Write-Host "Logs: $InstallPath\logs\"
+Write-Host "Update:   " -NoNewline -ForegroundColor Gray
+Write-Host ".\update.ps1 -InstallPath `"$InstallPath`""
+
+Write-Host ""
+Write-Host "Logs:     $InstallPath\logs\"
 Write-Host "Database: $InstallPath\data\asset_system.db"
 Write-Host ""
