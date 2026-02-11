@@ -120,8 +120,8 @@ export async function createLabelPDF(
   const doc = await PDFDocument.create();
   const page = doc.addPage([LABEL_WIDTH_PT, LABEL_HEIGHT_PT]);
 
-  // Embed font
-  const regularFont = await doc.embedFont(StandardFonts.Helvetica);
+  // Embed bold font for all text
+  const boldFont = await doc.embedFont(StandardFonts.HelveticaBold);
 
   // Embed QR code image
   const qrImage = await doc.embedPng(qrBuffer);
@@ -129,11 +129,10 @@ export async function createLabelPDF(
   // Layout: Landscape - QR on left, text on right
   const margin = 3
   const qrSize = 48; // ~17mm - compact to maximize text space
-  const bottomMargin = 14; // Space for organization name
 
-  // QR code on LEFT, vertically centered above org name line
+  // QR code on LEFT, vertically centered on full label height
   const qrX = margin;
-  const qrY = bottomMargin + (LABEL_HEIGHT_PT - bottomMargin - qrSize) / 2;
+  const qrY = (LABEL_HEIGHT_PT - qrSize) / 2;
 
   page.drawImage(qrImage, {
     x: qrX,
@@ -142,46 +141,75 @@ export async function createLabelPDF(
     height: qrSize,
   });
 
-  // Text starts after QR code
-  const textX = qrX + qrSize + 1;
-  let textY = LABEL_HEIGHT_PT - 14;
-
-  // All text uses same font (regular) and color (black)
-  const fontSize = 8;
-  const lineHeight = 10;
-
-  // Assigned To name
+  // Assigned To name - centered at top of label, auto-fit to fill width
+  const topMargin = 12; // Space for assigned to name at top
   if (opts.showAssignedTo && asset.assignedTo) {
-    page.drawText(truncateText(asset.assignedTo, 30), {
-      x: textX,
-      y: textY,
-      size: fontSize,
-      font: regularFont,
+    const assignedText = asset.assignedTo;
+    const availableWidth = LABEL_WIDTH_PT - (margin * 2);
+    const maxAssignedFontSize = 14;
+    const minAssignedFontSize = 7;
+
+    // Calculate font size to fit text within available width
+    let assignedFontSize = maxAssignedFontSize;
+    let assignedWidth = boldFont.widthOfTextAtSize(assignedText, assignedFontSize);
+
+    // Scale down if text is too wide
+    if (assignedWidth > availableWidth) {
+      assignedFontSize = Math.max(minAssignedFontSize, (availableWidth / assignedWidth) * maxAssignedFontSize);
+      assignedWidth = boldFont.widthOfTextAtSize(assignedText, assignedFontSize);
+    }
+
+    page.drawText(assignedText, {
+      x: (LABEL_WIDTH_PT - assignedWidth) / 2,
+      y: LABEL_HEIGHT_PT - topMargin,
+      size: assignedFontSize,
+      font: boldFont,
       color: rgb(0, 0, 0),
     });
-    textY -= lineHeight;
   }
 
-  // Item Number with prefix
-  page.drawText(truncateText(`Item: ${asset.itemNumber}`, 30), {
+  // Text starts after QR code
+  const textX = qrX + qrSize + 2;
+  let textY = LABEL_HEIGHT_PT - 24; // Start below the assigned to name
+
+  // Text styling
+  const fontSize = 8;
+  const boldFontSize = 9;
+  const lineHeight = 10;
+  const textAreaWidth = LABEL_WIDTH_PT - textX - margin; // Available width for text
+
+  // Item Number with prefix - bold and larger
+  page.drawText(truncateText(`Item: ${asset.itemNumber}`, 28), {
     x: textX,
     y: textY,
-    size: fontSize,
-    font: regularFont,
+    size: boldFontSize,
+    font: boldFont,
     color: rgb(0, 0, 0),
   });
   textY -= lineHeight;
 
-  // Model (always shown)
+  // Model (always shown) - auto-fit to available width
   if (asset.model) {
     const modelText = asset.manufacturer?.name
       ? `${asset.manufacturer.name} ${asset.model}`
       : asset.model;
-    page.drawText(truncateText(modelText, 32), {
+    const maxModelFontSize = 8;
+    const minModelFontSize = 5;
+
+    // Calculate font size to fit text within available width
+    let modelFontSize = maxModelFontSize;
+    let modelWidth = boldFont.widthOfTextAtSize(modelText, modelFontSize);
+
+    // Scale down if text is too wide
+    if (modelWidth > textAreaWidth) {
+      modelFontSize = Math.max(minModelFontSize, (textAreaWidth / modelWidth) * maxModelFontSize);
+    }
+
+    page.drawText(modelText, {
       x: textX,
       y: textY,
-      size: fontSize,
-      font: regularFont,
+      size: modelFontSize,
+      font: boldFont,
       color: rgb(0, 0, 0),
     });
     textY -= lineHeight;
@@ -193,7 +221,7 @@ export async function createLabelPDF(
       x: textX,
       y: textY,
       size: fontSize,
-      font: regularFont,
+      font: boldFont,
       color: rgb(0, 0, 0),
     });
     textY -= lineHeight;
@@ -205,7 +233,7 @@ export async function createLabelPDF(
       x: textX,
       y: textY,
       size: fontSize,
-      font: regularFont,
+      font: boldFont,
       color: rgb(0, 0, 0),
     });
     textY -= lineHeight;
@@ -217,21 +245,33 @@ export async function createLabelPDF(
       x: textX,
       y: textY,
       size: fontSize,
-      font: regularFont,
+      font: boldFont,
       color: rgb(0, 0, 0),
     });
   }
 
-  // Organization Name - centered at bottom, full width, larger font
+  // Organization Name - centered at bottom, auto-fit to fill width
   if (asset.organizationName) {
-    const orgFontSize = 8
-    const orgText = truncateText(asset.organizationName, 44);
-    const orgWidth = regularFont.widthOfTextAtSize(orgText, orgFontSize);
+    const orgText = asset.organizationName;
+    const availableWidth = LABEL_WIDTH_PT - (margin * 2);
+    const maxFontSize = 14;
+    const minFontSize = 6;
+
+    // Calculate font size to fit text within available width
+    let orgFontSize = maxFontSize;
+    let orgWidth = boldFont.widthOfTextAtSize(orgText, orgFontSize);
+
+    // Scale down if text is too wide
+    if (orgWidth > availableWidth) {
+      orgFontSize = Math.max(minFontSize, (availableWidth / orgWidth) * maxFontSize);
+      orgWidth = boldFont.widthOfTextAtSize(orgText, orgFontSize);
+    }
+
     page.drawText(orgText, {
       x: (LABEL_WIDTH_PT - orgWidth) / 2,
       y: 4,
       size: orgFontSize,
-      font: regularFont,
+      font: boldFont,
       color: rgb(0, 0, 0),
     });
   }

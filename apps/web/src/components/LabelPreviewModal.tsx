@@ -90,9 +90,9 @@ export default function LabelPreviewModal({ asset, onClose }: LabelPreviewModalP
                 />
                 <div className="flex-1 min-w-0 overflow-hidden leading-tight">
                   {labelOptions.showAssignedTo && asset.assignedTo && (
-                    <p className="text-xs font-medium truncate">{asset.assignedTo}</p>
+                    <p className="text-sm font-bold truncate">{asset.assignedTo}</p>
                   )}
-                  <p className="text-xs truncate">Item: {asset.itemNumber}</p>
+                  <p className="text-sm font-bold truncate">Item: {asset.itemNumber}</p>
                   {asset.model && (
                     <p className="text-xs text-gray-700 truncate">
                       {asset.manufacturer?.name} {asset.model}
@@ -109,7 +109,7 @@ export default function LabelPreviewModal({ asset, onClose }: LabelPreviewModalP
                   )}
                 </div>
               </div>
-              <p className="text-xs text-gray-600 text-center truncate border-t border-gray-300 py-1 px-2">
+              <p className="text-sm font-bold text-gray-800 text-center truncate border-t border-gray-300 py-1 px-2">
                 {orgData?.value || 'Organization Name'}
               </p>
             </div>

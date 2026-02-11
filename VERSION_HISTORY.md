@@ -4,6 +4,37 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.1.0] - 2025-02-11
+
+### Label Printing Improvements
+
+Enhanced label layout and text formatting for better readability.
+
+#### Changes
+- **Assigned To Name**: Now centered at top of label with auto-fit sizing (14pt max, 7pt min)
+- **Item Number**: Bold text at 9pt
+- **Model**: Auto-fit to available width (8pt max, 5pt min) - no truncation
+- **All Label Text**: Now uses bold font throughout
+- **Organization Name**: Auto-fit to fill label width (14pt max, 6pt min)
+- **QR Code**: Centered vertically on full label height
+- **Text Spacing**: Increased gap between QR code and text fields
+
+#### Layout
+```
+┌─────────────────────────────────────────┐
+│         Assigned To Name (centered)     │
+│ [QR]  Item: 1234                        │
+│ [QR]  Manufacturer Model                │
+│ [QR]  S/N: ABC123                       │
+│ [QR]  hostname                          │
+│ [QR]  192.168.1.100                     │
+├─────────────────────────────────────────┤
+│      Organization Name (centered)       │
+└─────────────────────────────────────────┘
+```
+
+---
+
 ## [1.0.0] - 2025-02-11
 
 ### Initial Release
