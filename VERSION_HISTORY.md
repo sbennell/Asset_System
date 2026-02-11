@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.1.1] - 2025-02-11
+
+### Bug Fixes
+
+- **Print Preview Modal**: Updated preview layout to match v1.1.0 label changes
+  - Assigned To name now shown centered at top
+  - QR code centered vertically in middle section
+  - All text fields now display in bold
+  - Layout accurately reflects printed label output
+
+---
+
 ## [1.1.0] - 2025-02-11
 
 ### Label Printing Improvements

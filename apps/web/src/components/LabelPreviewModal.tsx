@@ -76,39 +76,46 @@ export default function LabelPreviewModal({ asset, onClose }: LabelPreviewModalP
 
         {/* Content */}
         <div className="p-4 space-y-4">
-          {/* Preview - Landscape layout matching actual print */}
+          {/* Preview - Landscape layout matching actual print (v1.1.0) */}
           <div className="flex justify-center p-4 bg-gray-50 rounded-lg">
             <div
-              className="bg-white border border-gray-400 rounded shadow-sm flex flex-col justify-between"
-              style={{ width: '300px', minHeight: '120px' }}
+              className="bg-white border border-gray-400 rounded shadow-sm flex flex-col"
+              style={{ width: '300px', minHeight: '130px' }}
             >
-              <div className="flex items-start gap-2 p-2">
+              {/* Assigned To - centered at top */}
+              {labelOptions.showAssignedTo && asset.assignedTo && (
+                <p className="text-sm font-bold text-center truncate px-2 pt-2">
+                  {asset.assignedTo}
+                </p>
+              )}
+
+              {/* Middle section: QR + text */}
+              <div className="flex items-center gap-3 px-2 py-1 flex-1">
                 <img
                   src={api.getLabelPreviewUrl(asset.id)}
                   alt="QR Code"
                   className="w-14 h-14 flex-shrink-0"
                 />
                 <div className="flex-1 min-w-0 overflow-hidden leading-tight">
-                  {labelOptions.showAssignedTo && asset.assignedTo && (
-                    <p className="text-sm font-bold truncate">{asset.assignedTo}</p>
-                  )}
                   <p className="text-sm font-bold truncate">Item: {asset.itemNumber}</p>
                   {asset.model && (
-                    <p className="text-xs text-gray-700 truncate">
+                    <p className="text-xs font-bold truncate">
                       {asset.manufacturer?.name} {asset.model}
                     </p>
                   )}
                   {asset.serialNumber && (
-                    <p className="text-xs text-gray-700 truncate">S/N: {asset.serialNumber}</p>
+                    <p className="text-xs font-bold truncate">S/N: {asset.serialNumber}</p>
                   )}
                   {labelOptions.showHostname && asset.hostname && (
-                    <p className="text-xs text-gray-700 truncate">{asset.hostname}</p>
+                    <p className="text-xs font-bold truncate">{asset.hostname}</p>
                   )}
                   {labelOptions.showIpAddress && asset.ipAddress && (
-                    <p className="text-xs text-gray-700 truncate">{asset.ipAddress}</p>
+                    <p className="text-xs font-bold truncate">{asset.ipAddress}</p>
                   )}
                 </div>
               </div>
+
+              {/* Organization Name - centered at bottom */}
               <p className="text-sm font-bold text-gray-800 text-center truncate border-t border-gray-300 py-1 px-2">
                 {orgData?.value || 'Organization Name'}
               </p>
