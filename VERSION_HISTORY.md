@@ -4,6 +4,14 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.3.2] - 2026-02-13
+
+### Changes
+
+- Version bump to test web-based update feature
+
+---
+
 ## [1.3.1] - 2026-02-13
 
 ### Bug Fixes
