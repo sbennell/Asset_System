@@ -73,7 +73,7 @@ export default function AssetList() {
   const page = parseInt(searchParams.get('page') || '1', 10);
   const limit = parseInt(searchParams.get('limit') || '50', 10);
   const search = searchParams.get('search') || '';
-  const status = searchParams.get('status') || '';
+  const status = searchParams.get('status') ?? '_active';
   const category = searchParams.get('category') || '';
   const manufacturer = searchParams.get('manufacturer') || '';
   const location = searchParams.get('location') || '';
@@ -150,7 +150,7 @@ export default function AssetList() {
     setSearchParams({});
   };
 
-  const hasFilters = search || status || category || manufacturer || location;
+  const hasFilters = search || (status && status !== '_active' && status !== '_all') || category || manufacturer || location;
 
   const toggleSelectAll = () => {
     if (!data?.data) return;
@@ -245,10 +245,11 @@ export default function AssetList() {
               <label className="label">Status</label>
               <select
                 value={status}
-                onChange={(e) => updateParams({ status: e.target.value || undefined })}
+                onChange={(e) => updateParams({ status: e.target.value })}
                 className="input"
               >
-                <option value="">All Statuses</option>
+                <option value="_active">Active</option>
+                <option value="_all">All Statuses</option>
                 {Object.entries(STATUS_LABELS).map(([value, label]) => (
                   <option key={value} value={value}>{label}</option>
                 ))}

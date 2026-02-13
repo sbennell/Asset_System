@@ -30,6 +30,10 @@ coverage/
 # Prisma
 apps/api/prisma/migrations/
 
+# Database files (environment-specific)
+*.db
+*.db-journal
+
 # Uploaded files
 uploads/
 

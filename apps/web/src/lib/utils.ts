@@ -21,20 +21,20 @@ export function formatCurrency(value: string | number | null): string {
 
 export const STATUS_LABELS: Record<string, string> = {
   'In Use': 'In Use',
+  'In Use - Infrastructure': 'In Use - Infrastructure',
   'In Use - Loaned to student': 'In Use - Loaned to student',
   'In Use - Loaned to staff': 'In Use - Loaned to staff',
   'Awaiting allocation': 'Awaiting allocation',
   'Awaiting delivery': 'Awaiting delivery',
   'Awaiting collection': 'Awaiting collection',
+  'Decommissioned': 'Decommissioned',
   'Decommissioned - Beyond service age': 'Decommissioned - Beyond service age',
   'Decommissioned - Damaged': 'Decommissioned - Damaged',
   'Decommissioned - Stolen': 'Decommissioned - Stolen',
   'Decommissioned - In storage': 'Decommissioned - In storage',
   'Decommissioned - User left school': 'Decommissioned - User left school',
   'Decommissioned - Written Off': 'Decommissioned - Written Off',
-  'Decommissioned - Unreturned': 'Decommissioned - Unreturned',
-  'Retired - Uncollected': 'Retired - Uncollected',
-  'Retired - Lost': 'Retired - Lost'
+  'Decommissioned - Unreturned': 'Decommissioned - Unreturned'
 };
 
 export const CONDITION_LABELS: Record<string, string> = {

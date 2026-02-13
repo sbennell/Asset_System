@@ -42,7 +42,9 @@ router.get('/', async (req: Request, res: Response) => {
       ];
     }
 
-    if (status) {
+    if (status === '_active') {
+      where.status = { not: { startsWith: 'Decommissioned' } } as any;
+    } else if (status && status !== '_all') {
       where.status = status as any;
     }
 
@@ -123,6 +125,31 @@ router.get('/', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching assets:', error);
     res.status(500).json({ error: 'Failed to fetch assets' });
+  }
+});
+
+// Get next item number (must be before /:id route)
+router.get('/next-item-number', async (req: Request, res: Response) => {
+  const prisma = req.app.locals.prisma as PrismaClient;
+
+  try {
+    const assets = await prisma.asset.findMany({
+      select: { itemNumber: true }
+    });
+
+    let maxNum = 0;
+    for (const asset of assets) {
+      const nums = asset.itemNumber.match(/\d+/g);
+      if (nums) {
+        const last = parseInt(nums[nums.length - 1], 10);
+        if (last > maxNum) maxNum = last;
+      }
+    }
+
+    res.json({ nextItemNumber: String(maxNum + 1) });
+  } catch (error) {
+    console.error('Error getting next item number:', error);
+    res.status(500).json({ error: 'Failed to get next item number' });
   }
 });
 

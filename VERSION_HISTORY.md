@@ -4,6 +4,20 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.5.0] - 2026-02-14
+
+### New Features
+
+- **Active Status Filter**: New default "Active" filter on the asset list excludes all Decommissioned assets
+  - "All Statuses" option available to show everything including decommissioned
+  - Individual status filters still available
+- **Auto Item Number**: Item Number field is automatically prefilled with the next available number when creating a new asset
+  - Scans all existing item numbers and suggests the next highest value
+- **Adobe Reader Install**: Install script now installs Adobe Reader via Chocolatey
+  - Required by `pdf-to-printer` for label printing on Windows
+
+---
+
 ## [1.4.0] - 2026-02-14
 
 ### New Features

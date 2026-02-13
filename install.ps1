@@ -152,6 +152,24 @@ if ($LASTEXITCODE -eq 0 -and $npmVersion) {
     exit 1
 }
 
+# Check/install Adobe Reader (required for label printing via pdf-to-printer)
+$ErrorActionPreference = "Continue"
+$adobeInstalled = $false
+$adobePath = Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\AcroRd32.exe" -ErrorAction SilentlyContinue
+if (-not $adobePath) {
+    $adobePath = Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\Acrobat.exe" -ErrorAction SilentlyContinue
+}
+if ($adobePath) {
+    Write-Success "Adobe Reader found"
+    $adobeInstalled = $true
+} else {
+    Write-Warning "Adobe Reader not found, installing via Chocolatey..."
+    choco install adobereader -y --no-progress 2>&1 | Out-Null
+    Write-Success "Adobe Reader installed"
+    $adobeInstalled = $true
+}
+$ErrorActionPreference = "Continue"
+
 # Restore strict error handling
 $ErrorActionPreference = "Stop"
 

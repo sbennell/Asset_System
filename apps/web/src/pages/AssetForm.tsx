@@ -38,7 +38,7 @@ export default function AssetForm() {
   const queryClient = useQueryClient();
   const isEditing = !!id;
 
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<AssetFormData>({
+  const { register, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm<AssetFormData>({
     defaultValues: {
       status: 'In Use',
       condition: 'GOOD'
@@ -50,6 +50,13 @@ export default function AssetForm() {
     queryKey: ['asset', id],
     queryFn: () => api.getAsset(id!),
     enabled: isEditing
+  });
+
+  // Fetch next item number for new assets
+  const { data: nextItemData } = useQuery({
+    queryKey: ['next-item-number'],
+    queryFn: api.getNextItemNumber,
+    enabled: !isEditing
   });
 
   // Fetch lookups
@@ -69,6 +76,13 @@ export default function AssetForm() {
     queryKey: ['locations'],
     queryFn: api.getLocations
   });
+
+  // Prefill next item number for new assets
+  useEffect(() => {
+    if (!isEditing && nextItemData?.nextItemNumber) {
+      setValue('itemNumber', nextItemData.nextItemNumber);
+    }
+  }, [isEditing, nextItemData, setValue]);
 
   // Populate form when asset loads
   useEffect(() => {

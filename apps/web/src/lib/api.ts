@@ -203,6 +203,7 @@ export const api = {
     return fetchJson<PaginatedResponse<Asset>>(`/assets?${searchParams}`);
   },
   getAsset: (id: string) => fetchJson<Asset>(`/assets/${id}`),
+  getNextItemNumber: () => fetchJson<{ nextItemNumber: string }>('/assets/next-item-number'),
   createAsset: (data: Partial<Asset>) => fetchJson<Asset>('/assets', {
     method: 'POST',
     body: JSON.stringify(data)
