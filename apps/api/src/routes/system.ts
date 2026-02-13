@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { requireAdmin } from './auth.js';
-import { existsSync, writeFileSync, unlinkSync } from 'fs';
+import { existsSync, writeFileSync, unlinkSync, mkdirSync } from 'fs';
 import { spawn } from 'child_process';
 import path from 'path';
 
@@ -24,11 +24,16 @@ router.post('/update', requireAdmin, async (req: Request, res: Response) => {
     return res.status(409).json({ error: 'Update already in progress' });
   }
 
-  // Write lock file
+  // Ensure logs directory exists and write lock file
+  const logsDir = path.join(installPath, 'logs');
   try {
+    if (!existsSync(logsDir)) {
+      mkdirSync(logsDir, { recursive: true });
+    }
     writeFileSync(lockFile, new Date().toISOString(), 'utf8');
-  } catch (err) {
-    return res.status(500).json({ error: 'Failed to create update lock file' });
+  } catch (err: any) {
+    console.error('Failed to create update lock file:', err);
+    return res.status(500).json({ error: `Failed to create update lock file: ${err.message}` });
   }
 
   // Build the PowerShell update script
@@ -156,9 +161,10 @@ try {
   const scriptPath = path.join(installPath, 'logs', '_web_update.ps1');
   try {
     writeFileSync(scriptPath, script, 'utf8');
-  } catch (err) {
+  } catch (err: any) {
     unlinkSync(lockFile);
-    return res.status(500).json({ error: 'Failed to write update script' });
+    console.error('Failed to write update script:', err);
+    return res.status(500).json({ error: `Failed to write update script: ${err.message}` });
   }
 
   // Spawn detached PowerShell process

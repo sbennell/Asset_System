@@ -11,6 +11,9 @@ All notable changes to the Asset Management System are documented in this file.
 - **Login Fix**: Fixed issue where users had to log in twice after application boot
   - Login now sets auth data directly in the query cache instead of relying on a background refetch
   - Eliminates race condition between navigation and auth status check
+- **Web Update Fix**: Fixed 500 error when triggering update from web interface
+  - Ensures logs directory is created automatically if it doesn't exist
+  - Improved error messages for easier debugging
 
 ---
 
