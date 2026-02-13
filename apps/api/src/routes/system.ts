@@ -167,14 +167,13 @@ try {
     return res.status(500).json({ error: `Failed to write update script: ${err.message}` });
   }
 
-  // Spawn a fully independent PowerShell process using Start-Process.
-  // A simple detached child would be killed by NSSM when the service stops,
-  // so we use PowerShell Start-Process to break out of the process tree.
-  const child = spawn('powershell', [
-    '-ExecutionPolicy', 'Bypass', '-Command',
-    `Start-Process -FilePath 'powershell' -ArgumentList '-ExecutionPolicy Bypass -File "${scriptPath}"' -WindowStyle Hidden`
-  ], {
-    detached: true,
+  // Use WMI to create a process completely independent of the NSSM service.
+  // NSSM uses Windows Job Objects to track all child processes, so both
+  // detached spawns and Start-Process children get killed when the service stops.
+  // wmic process call create spawns via WmiPrvSE.exe, which is outside
+  // the NSSM job object, so the process survives service stop/restart.
+  const cmdLine = `powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -File "${scriptPath}"`;
+  const child = spawn('wmic', ['process', 'call', 'create', cmdLine], {
     stdio: 'ignore',
     windowsHide: true,
   });
