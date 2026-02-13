@@ -4,7 +4,17 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
-## [1.3.0] - 2025-02-11
+## [1.3.1] - 2026-02-13
+
+### Bug Fixes
+
+- **Login Fix**: Fixed issue where users had to log in twice after application boot
+  - Login now sets auth data directly in the query cache instead of relying on a background refetch
+  - Eliminates race condition between navigation and auth status check
+
+---
+
+## [1.3.0] - 2026-02-13
 
 ### New Features
 

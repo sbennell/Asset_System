@@ -14,8 +14,12 @@ export default function Login() {
   const loginMutation = useMutation({
     mutationFn: ({ username, password }: { username: string; password: string }) =>
       api.login(username, password),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['auth-status'] });
+    onSuccess: (data) => {
+      // Set auth data directly in cache so ProtectedRoute sees it immediately
+      queryClient.setQueryData(['auth-status'], {
+        authenticated: true,
+        user: data.user
+      });
       navigate('/');
     },
     onError: (err: Error) => {
