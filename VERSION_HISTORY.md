@@ -4,6 +4,23 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.4.0] - 2026-02-14
+
+### New Features
+
+- **About Dialog**: Clicking version or update notification opens an About modal
+  - Displays current version, changelog summary parsed from GitHub, and copyright info
+  - Links to GitHub repository and full changelog
+  - Admin users can trigger updates directly from the modal
+  - Non-admin users see a link to GitHub releases
+
+### Changes
+
+- Sidebar version text is replaced by "Update to vX.X.X" notification when an update is available
+- Update confirmation moved from browser `confirm()` dialog to the About modal
+
+---
+
 ## [1.3.2] - 2026-02-14
 
 ### Bug Fixes

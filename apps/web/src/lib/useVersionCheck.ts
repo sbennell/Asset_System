@@ -1,10 +1,17 @@
 import { useQuery } from '@tanstack/react-query';
 
-export const APP_VERSION = '1.3.2';
+export const APP_VERSION = '1.4.0';
+
+export interface ChangelogEntry {
+  version: string;
+  date: string;
+  content: string;
+}
 
 interface VersionCheck {
   latestVersion: string | null;
   updateAvailable: boolean;
+  changelog: ChangelogEntry[];
 }
 
 function parseVersion(version: string): number[] {
@@ -23,6 +30,25 @@ function isNewer(latest: string, current: string): boolean {
   return false;
 }
 
+function parseChangelog(text: string): ChangelogEntry[] {
+  const entries: ChangelogEntry[] = [];
+  const sections = text.split(/(?=## \[\d+\.\d+\.\d+\])/);
+  for (const section of sections) {
+    const headerMatch = section.match(/## \[(\d+\.\d+\.\d+)\]\s*-\s*(\S+)/);
+    if (!headerMatch) continue;
+    const content = section
+      .replace(/## \[.*?\].*\n/, '')
+      .replace(/^---\s*$/gm, '')
+      .trim();
+    entries.push({
+      version: headerMatch[1],
+      date: headerMatch[2],
+      content
+    });
+  }
+  return entries;
+}
+
 async function fetchLatestVersion(): Promise<VersionCheck> {
   const res = await fetch(
     'https://raw.githubusercontent.com/sbennell/Asset_System/main/VERSION_HISTORY.md',
@@ -34,7 +60,8 @@ async function fetchLatestVersion(): Promise<VersionCheck> {
   const latestVersion = match ? match[1] : null;
   return {
     latestVersion,
-    updateAvailable: latestVersion ? isNewer(latestVersion, APP_VERSION) : false
+    updateAvailable: latestVersion ? isNewer(latestVersion, APP_VERSION) : false,
+    changelog: parseChangelog(text)
   };
 }
 

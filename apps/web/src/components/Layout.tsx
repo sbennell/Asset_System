@@ -13,6 +13,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { useState, useCallback } from 'react';
+import AboutModal from './AboutModal';
 import { api } from '../lib/api';
 import { cn } from '../lib/utils';
 import { useAuth } from '../App';
@@ -33,6 +34,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { data: versionCheck } = useVersionCheck();
   const [updating, setUpdating] = useState(false);
   const [updateError, setUpdateError] = useState('');
+  const [showAbout, setShowAbout] = useState(false);
 
   const logoutMutation = useMutation({
     mutationFn: api.logout,
@@ -75,7 +77,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   }, []);
 
   const handleUpdate = async () => {
-    if (!confirm(`Update to v${versionCheck?.latestVersion}?\n\nThe system will restart automatically.`)) return;
     setUpdating(true);
     setUpdateError('');
     try {
@@ -169,37 +170,26 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
           {/* Version */}
           <div className="px-4 py-2 border-t border-gray-200">
-            <a href="https://github.com/sbennell/Asset_System/blob/main/VERSION_HISTORY.md" target="_blank" rel="noopener noreferrer" className="text-xs text-gray-400 hover:text-primary-600 text-center block">
-              Version {APP_VERSION}
-            </a>
-            {versionCheck?.updateAvailable && (
-              isAdmin ? (
-                <button
-                  onClick={handleUpdate}
-                  disabled={updating}
-                  className="mt-1 w-full flex items-center justify-center gap-1 text-xs text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-md px-2 py-1 transition-colors"
-                >
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                  </span>
-                  <Download className="w-3 h-3" />
-                  Update to v{versionCheck.latestVersion}
-                </button>
-              ) : (
-                <a
-                  href="https://github.com/sbennell/Asset_System/releases"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-1 flex items-center justify-center gap-1 text-xs text-amber-600 hover:text-amber-700 bg-amber-50 rounded-md px-2 py-1"
-                >
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                  </span>
-                  v{versionCheck.latestVersion} available
-                </a>
-              )
+            {versionCheck?.updateAvailable ? (
+              <button
+                onClick={() => setShowAbout(true)}
+                disabled={updating}
+                className="w-full flex items-center justify-center gap-1 text-xs text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-md px-2 py-1 transition-colors"
+              >
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                </span>
+                <Download className="w-3 h-3" />
+                Update to v{versionCheck.latestVersion}
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowAbout(true)}
+                className="text-xs text-gray-400 hover:text-primary-600 text-center block w-full"
+              >
+                Version {APP_VERSION}
+              </button>
             )}
           </div>
         </div>
@@ -223,6 +213,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
+
+      {/* About modal */}
+      {showAbout && (
+        <AboutModal
+          onClose={() => setShowAbout(false)}
+          onUpdate={handleUpdate}
+          isAdmin={isAdmin}
+          updateAvailable={versionCheck?.updateAvailable ?? false}
+          latestVersion={versionCheck?.latestVersion ?? null}
+          changelog={versionCheck?.changelog ?? []}
+        />
+      )}
 
       {/* Updating overlay */}
       {updating && (
