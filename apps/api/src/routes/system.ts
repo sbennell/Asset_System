@@ -167,8 +167,13 @@ try {
     return res.status(500).json({ error: `Failed to write update script: ${err.message}` });
   }
 
-  // Spawn detached PowerShell process
-  const child = spawn('powershell', ['-ExecutionPolicy', 'Bypass', '-File', scriptPath], {
+  // Spawn a fully independent PowerShell process using Start-Process.
+  // A simple detached child would be killed by NSSM when the service stops,
+  // so we use PowerShell Start-Process to break out of the process tree.
+  const child = spawn('powershell', [
+    '-ExecutionPolicy', 'Bypass', '-Command',
+    `Start-Process -FilePath 'powershell' -ArgumentList '-ExecutionPolicy Bypass -File "${scriptPath}"' -WindowStyle Hidden`
+  ], {
     detached: true,
     stdio: 'ignore',
     windowsHide: true,

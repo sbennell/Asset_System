@@ -6,9 +6,11 @@ All notable changes to the Asset Management System are documented in this file.
 
 ## [1.3.2] - 2026-02-13
 
-### Changes
+### Bug Fixes
 
-- Version bump to test web-based update feature
+- **Web Update Process Fix**: Fixed update script being killed when NSSM stops the service
+  - Update process now spawns via `Start-Process` to create a fully independent process outside the service's process tree
+  - Previously, NSSM would terminate the entire process tree including the detached update script
 
 ---
 
