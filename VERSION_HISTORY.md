@@ -4,6 +4,29 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.7.0] - 2026-02-15
+
+### New Features
+
+- **Bulk Edit Assets**: Select multiple assets from the list and edit shared fields at once
+  - "Edit Selected (N)" button appears when assets are checked
+  - Modal allows updating: Status, Condition, Category, Location, Decommission Date, and Comments
+  - Only filled fields are applied (leave blank to skip)
+  - Success/failure summary shows count of updated assets and any errors
+  - Full audit logging with human-readable field names
+- **Auto-Set Decommission Date**: When an asset status is changed to any "Decommissioned" variant, the Decommission Date is automatically set to today
+  - Works in both individual asset editing and bulk edit modal
+  - User can manually override the date if needed
+
+### Improvements
+
+- **Audit Log Display**: BULK_UPDATE actions now show detailed field changes
+  - Lookup fields (Location, Category, Manufacturer, Supplier) display friendly names instead of raw IDs
+  - Example: "Location: (empty) → Conference Room A" instead of UUID
+  - Improved readability for tracking what actually changed
+
+---
+
 ## [1.6.0] - 2026-02-15
 
 ### New Features

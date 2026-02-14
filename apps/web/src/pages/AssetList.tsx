@@ -1,16 +1,17 @@
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   flexRender,
   getCoreRowModel,
   useReactTable,
   createColumnHelper
 } from '@tanstack/react-table';
-import { Plus, Search, ChevronLeft, ChevronRight, Filter, X, ArrowUp, ArrowDown, Printer, Copy } from 'lucide-react';
+import { Plus, Search, ChevronLeft, ChevronRight, Filter, X, ArrowUp, ArrowDown, Printer, Copy, Pencil } from 'lucide-react';
 import { api, Asset } from '../lib/api';
 import { cn, STATUS_LABELS, STATUS_COLORS } from '../lib/utils';
 import BatchPrintModal from '../components/BatchPrintModal';
+import BulkEditModal from '../components/BulkEditModal';
 
 const columnHelper = createColumnHelper<Asset>();
 
@@ -64,11 +65,13 @@ const columns = [
 ];
 
 export default function AssetList() {
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchInput, setSearchInput] = useState(searchParams.get('search') || '');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showBatchPrintModal, setShowBatchPrintModal] = useState(false);
+  const [showBulkEditModal, setShowBulkEditModal] = useState(false);
 
   const page = parseInt(searchParams.get('page') || '1', 10);
   const limit = parseInt(searchParams.get('limit') || '50', 10);
@@ -191,13 +194,22 @@ export default function AssetList() {
         </div>
         <div className="flex gap-2">
           {selectedIds.size > 0 && (
-            <button
-              onClick={handleBatchPrint}
-              className="btn btn-secondary"
-            >
-              <Printer className="w-4 h-4 mr-2" />
-              Print Labels ({selectedIds.size})
-            </button>
+            <>
+              <button
+                onClick={() => setShowBulkEditModal(true)}
+                className="btn btn-secondary"
+              >
+                <Pencil className="w-4 h-4 mr-2" />
+                Edit Selected ({selectedIds.size})
+              </button>
+              <button
+                onClick={handleBatchPrint}
+                className="btn btn-secondary"
+              >
+                <Printer className="w-4 h-4 mr-2" />
+                Print Labels ({selectedIds.size})
+              </button>
+            </>
           )}
           <Link to="/assets/bulk-add" className="btn btn-secondary">
             <Copy className="w-4 h-4 mr-2" />
@@ -453,6 +465,18 @@ export default function AssetList() {
           assetIds={Array.from(selectedIds)}
           onClose={() => setShowBatchPrintModal(false)}
           onSuccess={() => setSelectedIds(new Set())}
+        />
+      )}
+
+      {/* Bulk Edit Modal */}
+      {showBulkEditModal && (
+        <BulkEditModal
+          assetIds={Array.from(selectedIds)}
+          onClose={() => setShowBulkEditModal(false)}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['assets'] });
+            setSelectedIds(new Set());
+          }}
         />
       )}
     </div>

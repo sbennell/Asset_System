@@ -236,7 +236,7 @@ export default function AssetDetail() {
                       <div className="flex items-center gap-2">
                         <span className={`px-2 py-0.5 rounded text-xs font-medium ${
                           log.action === 'CREATE' ? 'bg-green-100 text-green-800' :
-                          log.action === 'UPDATE' ? 'bg-blue-100 text-blue-800' :
+                          log.action === 'UPDATE' || log.action === 'BULK_UPDATE' ? 'bg-blue-100 text-blue-800' :
                           'bg-gray-100 text-gray-800'
                         }`}>
                           {log.action}
@@ -249,7 +249,7 @@ export default function AssetDetail() {
                         {new Date(log.timestamp).toLocaleString()}
                       </span>
                     </div>
-                    {log.action === 'UPDATE' && changedFields.length > 0 && (
+                    {(log.action === 'UPDATE' || log.action === 'BULK_UPDATE') && changedFields.length > 0 && (
                       <div className="mt-2 pl-4 text-xs text-gray-600 space-y-1">
                         {changedFields.slice(0, 5).map(field => {
                           const before = changes.before[field];

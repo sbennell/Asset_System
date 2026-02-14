@@ -249,6 +249,133 @@ router.post('/bulk', async (req: Request, res: Response) => {
   }
 });
 
+// Bulk update assets with shared fields
+router.put('/bulk-update', async (req: Request, res: Response) => {
+  const prisma = req.app.locals.prisma as PrismaClient;
+
+  try {
+    const { ids, fields } = req.body;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'At least one asset ID is required' });
+    }
+
+    // Strip undefined and empty string values from fields
+    const cleanedFields: Record<string, any> = {};
+    Object.entries(fields).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        // Handle date fields
+        if (key === 'acquiredDate' || key === 'warrantyExpiration' || key === 'endOfLifeDate' || key === 'lastReviewDate' || key === 'decommissionDate') {
+          cleanedFields[key] = value ? new Date(value as string | number) : null;
+        }
+        // Handle price
+        else if (key === 'purchasePrice') {
+          cleanedFields[key] = value ? parseFloat(value as string) : null;
+        } else {
+          cleanedFields[key] = value;
+        }
+      }
+    });
+
+    // If no fields to update, return error
+    if (Object.keys(cleanedFields).length === 0) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+
+    const results: {
+      updated: number;
+      failed: number;
+      errors: { id: string; message: string }[];
+    } = { updated: 0, failed: 0, errors: [] };
+
+    for (const id of ids) {
+      try {
+        // Get current asset for audit log
+        const current = await prisma.asset.findUnique({ where: { id } });
+        if (!current) {
+          results.errors.push({ id, message: 'Asset not found' });
+          results.failed++;
+          continue;
+        }
+
+        // Update asset
+        const asset = await prisma.asset.update({
+          where: { id },
+          data: cleanedFields,
+          include: {
+            category: true,
+            manufacturer: true,
+            location: true,
+            supplier: true
+          }
+        });
+
+        // Fetch previous asset with relationships for better audit log display
+        const previousAsset = await prisma.asset.findUnique({
+          where: { id },
+          include: {
+            category: true,
+            manufacturer: true,
+            location: true,
+            supplier: true
+          }
+        });
+
+        // Build human-readable changes for audit log
+        // Exclude relationship object fields from audit log
+        const excludeFields = ['category', 'manufacturer', 'location', 'supplier'];
+        const beforeData: Record<string, any> = {};
+        const afterData: Record<string, any> = {};
+
+        // Copy all scalar fields from before state
+        Object.keys(current).forEach(key => {
+          if (!excludeFields.includes(key)) {
+            beforeData[key] = current[key as keyof typeof current];
+            // Replace IDs with friendly names for display
+            if (key === 'categoryId' && current.categoryId) beforeData[key] = previousAsset?.category?.name || current.categoryId;
+            if (key === 'manufacturerId' && current.manufacturerId) beforeData[key] = previousAsset?.manufacturer?.name || current.manufacturerId;
+            if (key === 'locationId' && current.locationId) beforeData[key] = previousAsset?.location?.name || current.locationId;
+            if (key === 'supplierId' && current.supplierId) beforeData[key] = previousAsset?.supplier?.name || current.supplierId;
+          }
+        });
+
+        // Copy all scalar fields from after state
+        Object.keys(asset).forEach(key => {
+          if (!excludeFields.includes(key)) {
+            afterData[key] = (asset as any)[key];
+            // Replace IDs with friendly names for display
+            if (key === 'categoryId' && asset.categoryId) afterData[key] = asset.category?.name || asset.categoryId;
+            if (key === 'manufacturerId' && asset.manufacturerId) afterData[key] = asset.manufacturer?.name || asset.manufacturerId;
+            if (key === 'locationId' && asset.locationId) afterData[key] = asset.location?.name || asset.locationId;
+            if (key === 'supplierId' && asset.supplierId) afterData[key] = asset.supplier?.name || asset.supplierId;
+          }
+        });
+
+        // Create audit log
+        await prisma.auditLog.create({
+          data: {
+            assetId: id,
+            userId: req.session.userId,
+            action: 'BULK_UPDATE',
+            changes: JSON.stringify({ before: beforeData, after: afterData, bulkUpdate: true }),
+            ipAddress: req.ip
+          }
+        });
+
+        results.updated++;
+      } catch (error: any) {
+        results.failed++;
+        results.errors.push({ id, message: error.message || 'Unknown error' });
+      }
+    }
+
+    res.json(results);
+  } catch (error) {
+    console.error('Error bulk updating assets:', error);
+    res.status(500).json({ error: 'Failed to bulk update assets' });
+  }
+});
+
 // Get single asset
 router.get('/:id', async (req: Request, res: Response) => {
   const prisma = req.app.locals.prisma as PrismaClient;

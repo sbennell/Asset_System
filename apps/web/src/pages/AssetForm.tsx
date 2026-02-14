@@ -29,6 +29,8 @@ type AssetFormData = {
   locationId: string;
   warrantyExpiration: string;
   endOfLifeDate: string;
+  lastReviewDate: string;
+  decommissionDate: string;
   comments: string;
 };
 
@@ -38,12 +40,14 @@ export default function AssetForm() {
   const queryClient = useQueryClient();
   const isEditing = !!id;
 
-  const { register, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm<AssetFormData>({
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<AssetFormData>({
     defaultValues: {
       status: 'In Use',
       condition: 'GOOD'
     }
   });
+
+  const status = watch('status');
 
   // Fetch asset if editing
   const { data: asset } = useQuery({
@@ -110,10 +114,20 @@ export default function AssetForm() {
         locationId: asset.locationId || '',
         warrantyExpiration: asset.warrantyExpiration ? asset.warrantyExpiration.split('T')[0] : '',
         endOfLifeDate: asset.endOfLifeDate ? asset.endOfLifeDate.split('T')[0] : '',
+        lastReviewDate: asset.lastReviewDate ? asset.lastReviewDate.split('T')[0] : '',
+        decommissionDate: asset.decommissionDate ? asset.decommissionDate.split('T')[0] : '',
         comments: asset.comments || ''
       });
     }
   }, [asset, reset]);
+
+  // Auto-set decommission date when status changes to Decommissioned
+  useEffect(() => {
+    if (status && status.startsWith('Decommissioned')) {
+      const today = new Date().toISOString().split('T')[0];
+      setValue('decommissionDate', today);
+    }
+  }, [status, setValue]);
 
   const createMutation = useMutation({
     mutationFn: (data: Partial<Asset>) => api.createAsset(data),
@@ -322,6 +336,14 @@ export default function AssetForm() {
             <div>
               <label className="label">End of Life Date</label>
               <input {...register('endOfLifeDate')} type="date" className="input" />
+            </div>
+            <div>
+              <label className="label">Last Review Date</label>
+              <input {...register('lastReviewDate')} type="date" className="input" />
+            </div>
+            <div>
+              <label className="label">Decommission Date</label>
+              <input {...register('decommissionDate')} type="date" className="input" />
             </div>
           </div>
         </div>
