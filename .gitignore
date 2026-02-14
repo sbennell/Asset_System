@@ -33,6 +33,7 @@ apps/api/prisma/migrations/
 # Database files (environment-specific)
 *.db
 *.db-journal
+apps/api/prisma/dev.db
 
 # Uploaded files
 uploads/
