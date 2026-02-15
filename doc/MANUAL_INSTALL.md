@@ -50,9 +50,9 @@ Open PowerShell as Administrator and run:
 
 ```powershell
 # Create application directories
-New-Item -ItemType Directory -Path "C:\AssetSystem\app" -Force
-New-Item -ItemType Directory -Path "C:\AssetSystem\data" -Force
-New-Item -ItemType Directory -Path "C:\AssetSystem\logs" -Force
+New-Item -ItemType Directory -Path "C:\ICTMS\app" -Force
+New-Item -ItemType Directory -Path "C:\ICTMS\data" -Force
+New-Item -ItemType Directory -Path "C:\ICTMS\logs" -Force
 ```
 
 ## Step 3: Deploy Application Files
@@ -60,35 +60,35 @@ New-Item -ItemType Directory -Path "C:\AssetSystem\logs" -Force
 ### Option A: Download Release Archive
 
 1. Download the latest release archive
-2. Extract contents to `C:\AssetSystem\app`
+2. Extract contents to `C:\ICTMS\app`
 
 ### Option B: Clone from Git
 
 ```powershell
-cd C:\AssetSystem
+cd C:\ICTMS
 git clone https://github.com/sbennell/Asset_System.git app
 ```
 
 ## Step 4: Install Dependencies
 
 ```powershell
-cd C:\AssetSystem\app
+cd C:\ICTMS\app
 npm install
 ```
 
 ## Step 5: Configure Environment
 
-Create the environment file at `C:\AssetSystem\app\apps\api\.env`:
+Create the environment file at `C:\ICTMS\app\apps\api\.env`:
 
 ```powershell
 @"
 DATABASE_URL="file:C:/AssetSystem/data/asset_system.db"
 PORT=3001
 SESSION_SECRET="$(New-Guid)-$(New-Guid)"
-"@ | Out-File -FilePath "C:\AssetSystem\app\apps\api\.env" -Encoding UTF8
+"@ | Out-File -FilePath "C:\ICTMS\app\apps\api\.env" -Encoding UTF8
 ```
 
-Or manually create `C:\AssetSystem\app\apps\api\.env` with:
+Or manually create `C:\ICTMS\app\apps\api\.env` with:
 
 ```
 DATABASE_URL="file:C:/AssetSystem/data/asset_system.db"
@@ -104,7 +104,7 @@ SESSION_SECRET="your-strong-random-secret-here"
 ## Step 6: Build Application
 
 ```powershell
-cd C:\AssetSystem\app
+cd C:\ICTMS\app
 
 # Generate Prisma client
 cd apps\api
@@ -124,7 +124,7 @@ npx prisma db push
 Start the application to verify it works:
 
 ```powershell
-cd C:\AssetSystem\app
+cd C:\ICTMS\app
 npm run start
 ```
 
@@ -156,6 +156,28 @@ iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocola
 choco install nssm -y
 ```
 
+### Create Service Account (Optional but Recommended)
+
+For better security, create a dedicated user account to run the service:
+
+```powershell
+# Create local user account
+$username = "AssetSystemSvc"
+$password = ConvertTo-SecureString "YourStrongPassword123!" -AsPlainText -Force
+New-LocalUser -Name $username -Password $password -Description "Asset System Service Account" -PasswordNeverExpires
+
+# Add user to local administrators (for service permissions)
+Add-LocalGroupMember -Group "Administrators" -Member $username
+
+# Grant permissions to application directories
+$acl = Get-Acl "C:\ICTMS"
+$rule = New-Object System.Security.AccessControl.FileSystemAccessRule($username, "FullControl", "ContainerInherit,ObjectInherit", "None", "Allow")
+$acl.SetAccessRule($rule)
+Set-Acl "C:\ICTMS" $acl
+```
+
+Alternatively, use an existing domain user account.
+
 ### Install the Service
 
 ```powershell
@@ -163,13 +185,13 @@ choco install nssm -y
 nssm install AssetSystem "C:\Program Files\nodejs\node.exe"
 
 # Configure service parameters
-nssm set AssetSystem AppDirectory "C:\AssetSystem\app\apps\api"
+nssm set AssetSystem AppDirectory "C:\ICTMS\app\apps\api"
 nssm set AssetSystem AppParameters "dist\index.js"
 nssm set AssetSystem AppEnvironmentExtra "NODE_ENV=production"
 
 # Configure logging
-nssm set AssetSystem AppStdout "C:\AssetSystem\logs\stdout.log"
-nssm set AssetSystem AppStderr "C:\AssetSystem\logs\stderr.log"
+nssm set AssetSystem AppStdout "C:\ICTMS\logs\stdout.log"
+nssm set AssetSystem AppStderr "C:\ICTMS\logs\stderr.log"
 nssm set AssetSystem AppRotateFiles 1
 nssm set AssetSystem AppRotateBytes 1048576
 
@@ -178,6 +200,9 @@ nssm set AssetSystem Start SERVICE_AUTO_START
 
 # Set service description
 nssm set AssetSystem Description "IT Asset Management System"
+
+# Run service as a specific user (replace with your username)
+nssm set AssetSystem ObjectName ".\AssetSystemSvc" "YourStrongPassword123!"
 
 # Start the service
 Start-Service AssetSystem
@@ -238,20 +263,20 @@ The SQLite database is a single file. Create a scheduled task to back it up:
 # Create backup script
 @"
 `$date = Get-Date -Format "yyyy-MM-dd_HHmmss"
-Copy-Item "C:\AssetSystem\data\asset_system.db" "C:\AssetSystem\backups\asset_system_`$date.db"
+Copy-Item "C:\ICTMS\data\asset_system.db" "C:\ICTMS\backups\asset_system_`$date.db"
 
 # Keep only last 30 backups
-Get-ChildItem "C:\AssetSystem\backups\*.db" | Sort-Object CreationTime -Descending | Select-Object -Skip 30 | Remove-Item
-"@ | Out-File -FilePath "C:\AssetSystem\backup.ps1" -Encoding UTF8
+Get-ChildItem "C:\ICTMS\backups\*.db" | Sort-Object CreationTime -Descending | Select-Object -Skip 30 | Remove-Item
+"@ | Out-File -FilePath "C:\ICTMS\backup.ps1" -Encoding UTF8
 
 # Create backup directory
-New-Item -ItemType Directory -Path "C:\AssetSystem\backups" -Force
+New-Item -ItemType Directory -Path "C:\ICTMS\backups" -Force
 ```
 
 ### Schedule Daily Backups
 
 ```powershell
-$action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-ExecutionPolicy Bypass -File C:\AssetSystem\backup.ps1"
+$action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-ExecutionPolicy Bypass -File C:\ICTMS\backup.ps1"
 $trigger = New-ScheduledTaskTrigger -Daily -At 2:00AM
 Register-ScheduledTask -TaskName "AssetSystem Backup" -Action $action -Trigger $trigger -Description "Daily backup of Asset System database"
 ```
@@ -261,8 +286,11 @@ Register-ScheduledTask -TaskName "AssetSystem Backup" -Action $action -Trigger $
 This scheduled task allows admin users to trigger updates from the web interface. It runs independently of the NSSM service so the update survives the service being restarted.
 
 ```powershell
-$updateAction = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-ExecutionPolicy Bypass -File `"C:\AssetSystem\app\update.ps1`" -AutoUpdate -InstallPath `"C:\AssetSystem`""
-$updatePrincipal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest
+$updateAction = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-ExecutionPolicy Bypass -File `"C:\ICTMS\app\update.ps1`" -AutoUpdate -InstallPath `"C:\ICTMS`""
+
+# Run as the service account user (use same account as service)
+$updatePrincipal = New-ScheduledTaskPrincipal -UserId ".\AssetSystemSvc" -LogonType Password -RunLevel Highest
+
 $updateSettings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
 Register-ScheduledTask -TaskName "AssetSystemWebUpdate" -Action $updateAction -Principal $updatePrincipal -Settings $updateSettings -Description "Web-triggered update for Asset System"
 ```
@@ -287,8 +315,8 @@ Start-Service AssetSystem
 Restart-Service AssetSystem
 
 # View recent logs
-Get-Content "C:\AssetSystem\logs\stdout.log" -Tail 50
-Get-Content "C:\AssetSystem\logs\stderr.log" -Tail 50
+Get-Content "C:\ICTMS\logs\stdout.log" -Tail 50
+Get-Content "C:\ICTMS\logs\stderr.log" -Tail 50
 ```
 
 ### Uninstall Service
@@ -316,8 +344,8 @@ This requires the `AssetSystemWebUpdate` scheduled task (see Step 11 below).
 Run the update script from PowerShell as Administrator:
 
 ```powershell
-cd C:\AssetSystem\app
-.\update.ps1 -InstallPath "C:\AssetSystem"
+cd C:\ICTMS\app
+.\update.ps1 -InstallPath "C:\ICTMS"
 ```
 
 The script checks for updates, backs up the database, pulls code, rebuilds, and restarts the service.
@@ -332,12 +360,12 @@ The script checks for updates, backs up the database, pulls code, rebuilds, and 
 2. Back up the database:
    ```powershell
    $date = Get-Date -Format "yyyy-MM-dd_HHmmss"
-   Copy-Item "C:\AssetSystem\data\asset_system.db" "C:\AssetSystem\backups\asset_system_$date.db"
+   Copy-Item "C:\ICTMS\data\asset_system.db" "C:\ICTMS\backups\asset_system_$date.db"
    ```
 
 3. Pull latest code and rebuild:
    ```powershell
-   cd C:\AssetSystem\app
+   cd C:\ICTMS\app
    git pull origin main
    npm install
    cd apps\api
@@ -356,21 +384,21 @@ The script checks for updates, backs up the database, pulls code, rebuilds, and 
 
 ### Service Won't Start
 
-1. Check logs at `C:\AssetSystem\logs\stderr.log`
+1. Check logs at `C:\ICTMS\logs\stderr.log`
 2. Verify Node.js path: `C:\Program Files\nodejs\node.exe`
 3. Verify the application builds correctly:
    ```powershell
-   cd C:\AssetSystem\app\apps\api
+   cd C:\ICTMS\app\apps\api
    node dist\index.js
    ```
 
 ### Database Errors
 
-1. Verify the data directory exists: `C:\AssetSystem\data`
+1. Verify the data directory exists: `C:\ICTMS\data`
 2. Check DATABASE_URL in `.env` uses forward slashes: `file:C:/AssetSystem/data/...`
 3. Run database migration:
    ```powershell
-   cd C:\AssetSystem\app\apps\api
+   cd C:\ICTMS\app\apps\api
    npx prisma db push
    ```
 
@@ -396,7 +424,7 @@ The script checks for updates, backs up the database, pulls code, rebuilds, and 
 ## Directory Reference
 
 ```
-C:\AssetSystem\
+C:\ICTMS\
 ├── app\                          # Application files (git repo)
 │   ├── apps\
 │   │   ├── api\

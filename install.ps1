@@ -14,7 +14,7 @@
     - Creating backup scripts
 
 .PARAMETER InstallPath
-    Base installation path. Default: C:\AssetSystem
+    Base installation path. Default: C:\ICTMS
 
 .PARAMETER Port
     Port for the application. Default: 3001
@@ -29,14 +29,14 @@
     .\install.ps1
 
 .EXAMPLE
-    .\install.ps1 -InstallPath "D:\AssetSystem" -Port 8080
+    .\install.ps1 -InstallPath "D:\ICTMS" -Port 8080
 
 .EXAMPLE
     .\install.ps1 -Branch "develop"
 #>
 
 param(
-    [string]$InstallPath = "C:\AssetSystem",
+    [string]$InstallPath = "C:\ICTMS",
     [int]$Port = 3001,
     [string]$Branch = "main",
     [switch]$SkipService

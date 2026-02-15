@@ -13,7 +13,7 @@
     - Restarts the Windows service
 
 .PARAMETER InstallPath
-    Base installation path. Default: C:\AssetSystem
+    Base installation path. Default: C:\ICTMS
 
 .PARAMETER Branch
     Git branch to pull from. Default: main
@@ -28,11 +28,11 @@
     .\update.ps1
 
 .EXAMPLE
-    .\update.ps1 -InstallPath "D:\AssetSystem" -Branch "develop"
+    .\update.ps1 -InstallPath "D:\ICTMS" -Branch "develop"
 #>
 
 param(
-    [string]$InstallPath = "C:\AssetSystem",
+    [string]$InstallPath = "C:\ICTMS",
     [string]$Branch = "main",
     [switch]$SkipBackup,
     [switch]$SkipService,
