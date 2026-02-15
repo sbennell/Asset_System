@@ -4,6 +4,16 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.7.1] - 2026-02-15
+
+### Bug Fixes
+
+- **Label Printing in Service Mode**: Fixed "Failed to print label" error when application runs as Windows service under SYSTEM user
+  - Replaced PowerShell-based printing (`Start-Process -Verb Print`) with native Windows printing API via `pdf-to-printer` library
+  - PowerShell verb methods don't work in SYSTEM user context; direct API is more reliable for service-based deployments
+
+---
+
 ## [1.7.0] - 2026-02-15
 
 ### New Features

@@ -1,6 +1,6 @@
 # Asset Management System
 
-**Version 1.7.0**
+**Version 1.7.1**
 
 A web-based IT asset management system for tracking hardware, software, and equipment inventory. Built with React, Express, and SQLite.
 

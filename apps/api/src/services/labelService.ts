@@ -1,10 +1,9 @@
 import bwipjs from 'bwip-js';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-import { getPrinters } from 'pdf-to-printer';
+import { getPrinters, print } from 'pdf-to-printer';
 import { writeFileSync, unlinkSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import { exec } from 'child_process';
 
 // DK-22211 label dimensions for Brother QL label printers
 // For continuous 29mm tape, create landscape PDF and let printer driver rotate
@@ -293,7 +292,8 @@ export async function createLabelPreview(
 }
 
 /**
- * Print a label to the specified printer using PowerShell
+ * Print a label to the specified printer using pdf-to-printer
+ * Works in service context (SYSTEM user) where PowerShell verb methods fail
  */
 export async function printLabel(
   pdfBytes: Uint8Array,
@@ -304,29 +304,13 @@ export async function printLabel(
   writeFileSync(tempPath, Buffer.from(pdfBytes));
 
   try {
-    await new Promise<void>((resolve, reject) => {
-      const escapedPath = tempPath.replace(/\\/g, '/');
-      const escapedPrinter = printerName.replace(/'/g, "''");
-
-      // Simple PowerShell command to print using default PDF handler
-      const cmd = `powershell -NoProfile -Command "Start-Process -FilePath '${escapedPath}' -Verb Print"`;
-
-      exec(cmd, { timeout: 30000 }, (error) => {
-        if (error) {
-          // Try with PrintTo verb and printer name
-          const cmd2 = `powershell -NoProfile -Command "Start-Process -FilePath '${escapedPath}' -Verb PrintTo -ArgumentList '${escapedPrinter}'"`;
-          exec(cmd2, { timeout: 30000 }, (err2) => {
-            if (err2) {
-              reject(new Error(`Print failed: ${err2.message}`));
-            } else {
-              resolve();
-            }
-          });
-        } else {
-          resolve();
-        }
-      });
-    });
+    // Use pdf-to-printer which works in SYSTEM user context (service)
+    // Falls back to default printer if specified printer not found
+    if (printerName) {
+      await print(tempPath, { printer: printerName });
+    } else {
+      await print(tempPath);
+    }
   } finally {
     // Clean up temp file after a delay to allow printing to complete
     setTimeout(() => {
@@ -335,7 +319,7 @@ export async function printLabel(
       } catch (e) {
         // Ignore cleanup errors
       }
-    }, 10000);
+    }, 2000);
   }
 }
 
