@@ -8,13 +8,19 @@ All notable changes to the Asset Management System are documented in this file.
 
 ### Bug Fixes
 
-- **Label Printing in Service Mode**: Fixed "Failed to print label" error when application runs as Windows service under SYSTEM user
+- **Label Printing in Service Mode**: Fixed "Failed to print label" error and printer margin issues
   - Replaced PowerShell-based printing (`Start-Process -Verb Print`) with native Windows printing API via `pdf-to-printer` library
-  - PowerShell verb methods don't work in SYSTEM user context; direct API is more reliable for service-based deployments
+  - Set explicit DK-22211 paper size (29x62mm) with "fit" scaling to use full label area
+  - Removed SYSTEM user account option in installer; service now always runs as current logged-in user
+  - SYSTEM user account lacks proper printer access and caused 16mm margins on printed labels
+  - Service running as current user ensures consistent printer behavior between dev and production
 
-- **Label Layout and Margins**: Fixed text and QR code being cut off on printed labels
-  - Set explicit paper size to "29x62mm" format with "fit" scaling to use full label area
-  - Allows pdf-to-printer to scale content to fit label boundaries without cut-off
+### Installation Improvements
+
+- **Service Account Configuration**: Updated `install.ps1` to configure service to run as current user
+  - Prompts for user password during installation for secure service account setup
+  - Ensures label printing works correctly with proper printer access
+  - Eliminates printer margin issues that occurred with SYSTEM account
 
 ---
 

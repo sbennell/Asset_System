@@ -404,6 +404,23 @@ if (-not $SkipService) {
 
     Write-Success "Windows service installed"
 
+    # Configure service account for printer access
+    Write-Step "Configuring service account for label printing..."
+
+    # Get current user in DOMAIN\USER format
+    $currentUser = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+    Write-Host "Service will run as: $currentUser" -ForegroundColor Yellow
+    Write-Host "This ensures proper printer access for label printing."
+    Write-Host ""
+
+    # Prompt for password
+    $password = Read-Host "Enter password for $currentUser" -AsSecureString
+
+    # Set the service to run as this user
+    & $nssmPath set AssetSystem ObjectName "$currentUser" (ConvertFrom-SecureString -SecureString $password -AsPlainText)
+    Write-Success "Service configured to run as: $currentUser"
+    Write-Host ""
+
     # Start service
     Start-Service -Name "AssetSystem"
     Start-Sleep -Seconds 3
