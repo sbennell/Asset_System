@@ -113,7 +113,7 @@ export default function AboutModal({
 
           {/* Copyright */}
           <p className="text-center text-xs text-gray-400">
-            &copy; {new Date().getFullYear()} Asset Management System - Stewart Bennell
+            &copy; {new Date().getFullYear()} ICT Management System - Stewart Bennell
           </p>
         </div>
 
