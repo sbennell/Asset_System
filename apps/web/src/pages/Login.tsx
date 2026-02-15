@@ -109,7 +109,7 @@ export default function Login() {
           </button>
 
           <p className="text-center text-xs text-gray-500">
-            &copy; {new Date().getFullYear()} Asset Management System - Stewart Bennell
+            &copy; {new Date().getFullYear()} ICT Management System - Stewart Bennell
           </p>
         </form>
       </div>
