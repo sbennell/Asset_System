@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.28.8] - 2026-07-28
+
+### Fixed
+
+- Hardware Asset Register export now includes the assigned student's name. Previously the export only read the free-text "Assigned To" field, so assets assigned via the student picker (which links a `Student` record instead of writing to that field) exported with a blank "Assigned To" column.
+
+### Technical Details
+
+- `apps/api/src/routes/import.ts`: `/api/import/export` now includes the `student` relation and falls back to `${student.firstName} ${student.surname}` when an asset is linked to a student, matching the same pattern already used for labels (`labels.ts`) and the asset detail page.
+
+---
+
 ## [1.28.7] - 2026-07-24
 
 ### Added

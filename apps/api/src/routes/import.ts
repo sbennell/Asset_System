@@ -824,7 +824,8 @@ router.get('/export', async (req: Request, res: Response) => {
         category: true,
         supplier: true,
         location: true,
-        ipAddresses: true
+        ipAddresses: true,
+        student: true
       },
       orderBy: { itemNumber: 'asc' }
     });
@@ -872,7 +873,9 @@ router.get('/export', async (req: Request, res: Response) => {
         wlanMacAddress: asset.wlanMacAddress,
         ipAddress: sortedIPs[0]?.ip || null,
         ipAddressLabel: sortedIPs[0]?.label || null,
-        assignedTo: asset.assignedTo,
+        assignedTo: asset.student
+          ? `${asset.student.firstName} ${asset.student.surname}`
+          : asset.assignedTo,
         location: asset.location?.name,
         warrantyExpiration: asset.warrantyExpiration,
         endOfLifeDate: asset.endOfLifeDate,
