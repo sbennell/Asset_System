@@ -21,6 +21,7 @@ router.get('/', async (req: Request, res: Response) => {
       category,
       manufacturer,
       location,
+      stocktakeStatus,
       sortBy = 'itemNumber',
       sortOrder = 'asc'
     } = req.query;
@@ -59,6 +60,16 @@ router.get('/', async (req: Request, res: Response) => {
 
     if (location) {
       where.locationId = location as string;
+    }
+
+    // "Last stocktake" status - mirrors the reviewed/overdue/never logic used by
+    // the Stocktake Review report (reports.ts), so the two views agree.
+    if (stocktakeStatus === 'never') {
+      where.lastReviewDate = null;
+    } else if (stocktakeStatus === 'overdue' || stocktakeStatus === 'reviewed') {
+      const now = new Date();
+      const overdueDate = new Date(now.getFullYear(), now.getMonth() - 12, now.getDate());
+      where.lastReviewDate = stocktakeStatus === 'overdue' ? { lt: overdueDate } : { gte: overdueDate };
     }
 
     // Build orderBy - handle special cases

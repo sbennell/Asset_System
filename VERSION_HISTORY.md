@@ -4,6 +4,20 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.28.11] - 2026-08-07
+
+### Added
+
+- "Last Stocktake" filter on the Hardware Assets list (Reviewed / Overdue / Never Reviewed), so you can see which assets haven't been stocktaken recently without opening a specific stocktake round or the Reports page. Uses the same 12-month overdue logic as the existing Stocktake Review report, so the two views agree.
+
+### Technical Details
+
+- `apps/api/src/routes/assets.ts`: `GET /assets` now accepts a `stocktakeStatus` query param (`reviewed`/`overdue`/`never`) and filters on `Asset.lastReviewDate` accordingly, mirroring `reports.ts`'s `getReviewStatus` logic.
+- `apps/web/src/lib/api.ts`: `getAssets` accepts `stocktakeStatus`.
+- `apps/web/src/pages/AssetList.tsx`: new "Last Stocktake" dropdown in the filters panel, wired through the existing URL-search-param filter pattern.
+
+---
+
 ## [1.28.10] - 2026-08-07
 
 ### Added

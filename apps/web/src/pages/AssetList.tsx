@@ -105,12 +105,13 @@ export default function AssetList() {
   const category = searchParams.get('category') || '';
   const manufacturer = searchParams.get('manufacturer') || '';
   const location = searchParams.get('location') || '';
+  const stocktakeStatus = searchParams.get('stocktakeStatus') || '';
   const sortBy = searchParams.get('sortBy') || '';
   const sortOrder = searchParams.get('sortOrder') || '';
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['assets', { page, limit, search, status, category, manufacturer, location, sortBy, sortOrder }],
-    queryFn: () => api.getAssets({ page, limit, search, status, category, manufacturer, location, sortBy, sortOrder })
+    queryKey: ['assets', { page, limit, search, status, category, manufacturer, location, stocktakeStatus, sortBy, sortOrder }],
+    queryFn: () => api.getAssets({ page, limit, search, status, category, manufacturer, location, stocktakeStatus, sortBy, sortOrder })
   });
 
   const handleSort = (column: string) => {
@@ -178,7 +179,7 @@ export default function AssetList() {
     setSearchParams({});
   };
 
-  const hasFilters = search || (status && status !== '_active' && status !== '_all') || category || manufacturer || location;
+  const hasFilters = search || (status && status !== '_active' && status !== '_all') || category || manufacturer || location || stocktakeStatus;
 
   const toggleSelectAll = () => {
     if (!data?.data) return;
@@ -336,6 +337,20 @@ export default function AssetList() {
                 {locations?.map((loc) => (
                   <option key={loc.id} value={loc.id}>{loc.name}</option>
                 ))}
+              </select>
+            </div>
+
+            <div className="w-48">
+              <label className="label">Last Stocktake</label>
+              <select
+                value={stocktakeStatus}
+                onChange={(e) => updateParams({ stocktakeStatus: e.target.value || undefined })}
+                className="input"
+              >
+                <option value="">All</option>
+                <option value="reviewed">Reviewed</option>
+                <option value="overdue">Overdue</option>
+                <option value="never">Never Reviewed</option>
               </select>
             </div>
 

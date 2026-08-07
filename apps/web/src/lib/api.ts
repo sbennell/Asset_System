@@ -527,6 +527,7 @@ export const api = {
     category?: string;
     manufacturer?: string;
     location?: string;
+    stocktakeStatus?: string;
     sortBy?: string;
     sortOrder?: string;
   }) => {
