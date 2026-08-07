@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Edit, Trash2, Printer, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Printer, Eye, EyeOff, Copy } from 'lucide-react';
 import { api } from '../lib/api';
 import {
   formatDate,
@@ -94,6 +94,10 @@ export default function AssetDetail() {
           <Link to={`/assets/${id}/edit`} className="btn btn-secondary">
             <Edit className="w-4 h-4 mr-2" />
             Edit
+          </Link>
+          <Link to={`/assets/new?duplicateFrom=${id}`} className="btn btn-secondary">
+            <Copy className="w-4 h-4 mr-2" />
+            Duplicate
           </Link>
           <button
             onClick={handleDelete}

@@ -60,6 +60,7 @@ export default function AssetForm() {
   const [searchParams] = useSearchParams();
   const { hasPermission } = useAuth();
   const isEditing = !!id;
+  const duplicateFromId = searchParams.get('duplicateFrom');
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<AssetFormData>({
     defaultValues: {
@@ -86,6 +87,13 @@ export default function AssetForm() {
     queryKey: ['next-item-number'],
     queryFn: api.getNextItemNumber,
     enabled: !isEditing
+  });
+
+  // Fetch source asset when duplicating
+  const { data: duplicateSource } = useQuery({
+    queryKey: ['asset', duplicateFromId],
+    queryFn: () => api.getAsset(duplicateFromId!),
+    enabled: !isEditing && !!duplicateFromId
   });
 
   // Fetch lookups
@@ -173,6 +181,44 @@ export default function AssetForm() {
       }
     }
   }, [asset, reset]);
+
+  // Populate form from source asset when duplicating
+  useEffect(() => {
+    if (duplicateSource && !isEditing) {
+      reset({
+        manufacturerId: duplicateSource.manufacturerId || '',
+        model: duplicateSource.model || '',
+        categoryId: duplicateSource.categoryId || '',
+        description: duplicateSource.description || '',
+        status: duplicateSource.status || 'In Use',
+        condition: duplicateSource.condition || 'GOOD',
+        acquiredDate: duplicateSource.acquiredDate ? duplicateSource.acquiredDate.split('T')[0] : '',
+        purchasePrice: duplicateSource.purchasePrice || '',
+        supplierId: duplicateSource.supplierId || '',
+        orderNumber: duplicateSource.orderNumber || '',
+        warrantyExpiration: duplicateSource.warrantyExpiration ? duplicateSource.warrantyExpiration.split('T')[0] : '',
+        endOfLifeDate: duplicateSource.endOfLifeDate ? duplicateSource.endOfLifeDate.split('T')[0] : '',
+        comments: duplicateSource.comments || '',
+        businessPurpose: duplicateSource.businessPurpose || '',
+        businessOwner: duplicateSource.businessOwner || '',
+        technicalOwner: duplicateSource.technicalOwner || '',
+        version: duplicateSource.version || '',
+        criticalityTier: duplicateSource.criticalityTier || '',
+        dataClassification: duplicateSource.dataClassification || '',
+        hostingType: duplicateSource.hostingType || '',
+        supportType: duplicateSource.supportType || '',
+        internetFacing: duplicateSource.internetFacing === null || duplicateSource.internetFacing === undefined ? '' : String(duplicateSource.internetFacing)
+      });
+
+      // Re-apply the auto-generated item number, since reset() above cleared it
+      if (nextItemData?.nextItemNumber) {
+        setValue('itemNumber', nextItemData.nextItemNumber);
+      }
+
+      setAssignmentMode('staff');
+      setSelectedStudent(null);
+    }
+  }, [duplicateSource, isEditing, reset, nextItemData, setValue]);
 
   // Auto-set decommission date when status changes to Decommissioned
   useEffect(() => {
@@ -272,6 +318,15 @@ export default function AssetForm() {
 
       {/* Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {duplicateSource && (
+          <div className="rounded-md bg-blue-50 p-4">
+            <p className="text-sm text-blue-700">
+              Duplicating details from asset <strong>{duplicateSource.itemNumber}</strong>. Serial number,
+              assignment, location, hostname, MAC addresses, and device credentials were left blank for you
+              to fill in for this asset.
+            </p>
+          </div>
+        )}
         {mutation.error && (
           <div className="rounded-md bg-red-50 p-4">
             <p className="text-sm text-red-700">{(mutation.error as Error).message}</p>

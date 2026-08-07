@@ -4,6 +4,19 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.28.9] - 2026-08-07
+
+### Added
+
+- "Duplicate" action on the asset detail page. Opens the Add Asset form pre-filled with the source asset's manufacturer, model, category, description, status, condition, purchase info, lifecycle dates, comments, and compliance/governance fields — while leaving serial number, assignment, location, hostname, MAC addresses, and device credentials blank so they can be entered for the new unit. Useful when adding another unit of an asset already in the system (e.g. buying several identical laptops).
+
+### Technical Details
+
+- `apps/web/src/pages/AssetDetail.tsx`: new "Duplicate" button next to Edit/Delete, links to `/assets/new?duplicateFrom=<id>`.
+- `apps/web/src/pages/AssetForm.tsx`: reads the `duplicateFrom` query param, fetches the source asset, and `reset()`s the form with the template fields (mirroring the existing edit-populate effect and the field split already used by the bulk-add `sharedFields` pattern in `apps/api/src/routes/assets.ts`). No backend changes — reuses the existing `GET /assets/:id` and `POST /assets` endpoints.
+
+---
+
 ## [1.28.8] - 2026-07-28
 
 ### Fixed
