@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.28.10] - 2026-08-07
+
+### Added
+
+- "Copies" field on the Print Label modal, so you can print more than one copy of an asset's label in a single action (e.g. a spare, or a mis-print).
+
+### Technical Details
+
+- `apps/web/src/components/LabelPreviewModal.tsx`: new `copies` state and number input, passed through to `api.printLabel(assetId, copies, ...)` and `printDymoLabel(xml, printer, copies, ...)`. No backend changes — `POST /labels/print/:assetId` already looped a `copies` field from the request body, and the DYMO SDK already accepts a native `copies` param; both were just hardcoded to `1`. "Download PDF" is unaffected and still produces a single-page PDF.
+
+---
+
 ## [1.28.9] - 2026-08-07
 
 ### Added

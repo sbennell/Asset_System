@@ -25,6 +25,7 @@ export default function LabelPreviewModal({ asset, onClose }: LabelPreviewModalP
     showIpAddress: true,
     qrCodeContent: 'full',
   });
+  const [copies, setCopies] = useState(1);
 
   const { data: orgData } = useQuery({
     queryKey: ['settings', 'organization'],
@@ -51,7 +52,7 @@ export default function LabelPreviewModal({ asset, onClose }: LabelPreviewModalP
   }, [defaultSettings]);
 
   const printMutation = useMutation({
-    mutationFn: () => api.printLabel(asset.id, 1, labelOptions),
+    mutationFn: () => api.printLabel(asset.id, copies, labelOptions),
     onSuccess: (result) => {
       if (result.success) {
         onClose();
@@ -66,7 +67,7 @@ export default function LabelPreviewModal({ asset, onClose }: LabelPreviewModalP
   const dymoPrintMutation = useMutation({
     mutationFn: async () => {
       const { xml } = await api.getDymoLabelXml(asset.id, labelOptions);
-      await printDymoLabel(xml, dymo.selectedPrinter, 1, dymo.isTwinTurbo ? dymo.selectedRoll : undefined);
+      await printDymoLabel(xml, dymo.selectedPrinter, copies, dymo.isTwinTurbo ? dymo.selectedRoll : undefined);
     },
     onSuccess: () => onClose(),
   });
@@ -161,16 +162,28 @@ export default function LabelPreviewModal({ asset, onClose }: LabelPreviewModalP
           </div>
 
           {/* Label Size - per-print override, doesn't change the saved Settings default */}
-          <div>
-            <label className="label">Label Size</label>
-            <select
-              value={labelOptions.labelType || 'brother-dk22211'}
-              onChange={(e) => handleLabelTypeChange(e.target.value as 'brother-dk22211' | 'dymo-1933081')}
-              className="input"
-            >
-              <option value="brother-dk22211">Brother DK-22211 (29×62mm)</option>
-              <option value="dymo-1933081">Dymo 1933081 (25×89mm)</option>
-            </select>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="label">Label Size</label>
+              <select
+                value={labelOptions.labelType || 'brother-dk22211'}
+                onChange={(e) => handleLabelTypeChange(e.target.value as 'brother-dk22211' | 'dymo-1933081')}
+                className="input"
+              >
+                <option value="brother-dk22211">Brother DK-22211 (29×62mm)</option>
+                <option value="dymo-1933081">Dymo 1933081 (25×89mm)</option>
+              </select>
+            </div>
+            <div>
+              <label className="label">Copies</label>
+              <input
+                type="number"
+                min={1}
+                value={copies}
+                onChange={(e) => setCopies(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                className="input"
+              />
+            </div>
           </div>
 
           {/* Label Options */}
