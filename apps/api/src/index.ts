@@ -16,6 +16,7 @@ import systemRoutes from './routes/system.js';
 import networkRoutes from './routes/network.js';
 import reportRoutes from './routes/reports.js';
 import studentRoutes from './routes/students.js';
+import publicRoutes from './routes/public.js';
 import { startStudentImportWatcher, closeStudentImportWatcher } from './services/studentImportWatcher.js';
 
 const app = express();
@@ -74,6 +75,7 @@ app.use('/api/labels', labelRoutes);
 app.use('/api/system', systemRoutes);
 app.use('/api/network', networkRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/public', publicRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

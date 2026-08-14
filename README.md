@@ -1,6 +1,6 @@
 # IT Management System (ITMS)
 
-**Version 1.28.11**
+**Version 1.28.12**
 
 A web-based IT Management System for tracking hardware and equipment inventory, plus a separate software/license register. Built with React, Express, and SQLite.
 
@@ -206,6 +206,9 @@ Asset_System/
 - `POST /api/auth/login` - Login
 - `POST /api/auth/logout` - Logout
 - `GET /api/auth/status` - Check auth status
+
+### Public (no authentication)
+- `GET /api/public/asset-by-serial/:serialNumber` - Look up an asset's item number by serial number. Returns only `{ itemNumber }`. Intentionally unauthenticated so device-side scripts (e.g. asset-tag lockscreen tooling) that run as SYSTEM with no stored credentials can call it; rate-limited to 30 requests/minute per IP.
 
 ## Label Format
 

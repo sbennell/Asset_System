@@ -4,6 +4,19 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.28.12] - 2026-08-14
+
+### Added
+
+- Unauthenticated `GET /api/public/asset-by-serial/:serialNumber` endpoint that returns an asset's item number for a given serial number. Intended for device-side scripts (e.g. lockscreen asset-tag tooling) that run as SYSTEM with no ITMS credentials available; rate-limited to 30 requests/minute per IP.
+
+### Technical Details
+
+- `apps/api/src/routes/public.ts` (new): dedicated unauthenticated router, kept separate from `assets.ts` (which applies `requireAuth`/`requirePermission` to its whole router) so this route never passes through session auth. Looks up via `prisma.asset.findFirst({ where: { serialNumber } })` since `serialNumber` isn't `@unique` in the schema, and returns only `{ itemNumber }` to minimize disclosure on a no-auth route.
+- `apps/api/src/index.ts`: mounts the new router at `/api/public`.
+
+---
+
 ## [1.28.11] - 2026-08-07
 
 ### Added
