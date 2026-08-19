@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Download, X } from 'lucide-react';
 import { api } from '../lib/api';
+import { useAuth } from '../App';
 
 interface StudentExportModalProps {
   onClose: () => void;
@@ -23,7 +24,8 @@ const STUDENT_FIELD_OPTIONS: FieldOption[] = [
   { key: 'email', label: 'Email' },
   { key: 'username', label: 'Username' },
   { key: 'edupassUsername', label: 'Edupass Username' },
-  { key: 'birthdate', label: 'Birthdate' }
+  { key: 'birthdate', label: 'Birthdate' },
+  { key: 'password', label: 'Password' }
 ];
 
 const ASSET_FIELD_OPTIONS: FieldOption[] = [
@@ -48,9 +50,15 @@ const DEFAULT_FIELDS = new Set([
   'itemNumber', 'category', 'manufacturer', 'model', 'serialNumber'
 ]);
 
-const ALL_FIELD_KEYS = [...STUDENT_FIELD_OPTIONS, ...ASSET_FIELD_OPTIONS].map((f) => f.key);
-
 export default function StudentExportModal({ onClose, filters }: StudentExportModalProps) {
+  const { hasPermission } = useAuth();
+  const canViewPasswords = hasPermission('canViewStudentPasswords');
+
+  const studentFieldOptions = canViewPasswords
+    ? STUDENT_FIELD_OPTIONS
+    : STUDENT_FIELD_OPTIONS.filter((f) => f.key !== 'password');
+  const allFieldKeys = [...studentFieldOptions, ...ASSET_FIELD_OPTIONS].map((f) => f.key);
+
   const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set(DEFAULT_FIELDS));
 
   const toggleField = (key: string) => {
@@ -62,7 +70,7 @@ export default function StudentExportModal({ onClose, filters }: StudentExportMo
     });
   };
 
-  const selectAll = () => setSelectedFields(new Set(ALL_FIELD_KEYS));
+  const selectAll = () => setSelectedFields(new Set(allFieldKeys));
   const selectNone = () => setSelectedFields(new Set());
 
   const handleExport = () => {
@@ -117,7 +125,7 @@ export default function StudentExportModal({ onClose, filters }: StudentExportMo
 
         {/* Field selection */}
         <div className="space-y-4 mb-6">
-          {renderFieldGroup('Student Fields', STUDENT_FIELD_OPTIONS)}
+          {renderFieldGroup('Student Fields', studentFieldOptions)}
           {renderFieldGroup('Asset Fields', ASSET_FIELD_OPTIONS)}
         </div>
 

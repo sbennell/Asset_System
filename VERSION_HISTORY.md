@@ -4,6 +4,31 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.28.14] - 2026-08-20
+
+### Changed
+
+- Student export's Birthdate column now formats dates as DD-MM-YYYY instead of YYYY-MM-DD.
+
+### Technical Details
+
+- `apps/api/src/routes/students.ts`: `GET /students/export` sets `numFmt = 'dd-mm-yyyy'` on the `student_birthdate` column.
+
+---
+
+## [1.28.13] - 2026-08-20
+
+### Added
+
+- Student export now offers a "Password" column, visible only to users with the "View student passwords" permission (same permission that gates Login Cards and the student detail password field).
+
+### Technical Details
+
+- `apps/api/src/routes/students.ts`: `STUDENT_EXPORT_FIELDS` gains a `password` entry; `GET /students/export` drops `password` from the requested field list unless `canViewStudentPasswords(req)` is true, so a crafted `?fields=password` request from an unprivileged session is silently ignored rather than honored.
+- `apps/web/src/components/StudentExportModal.tsx`: the "Password" checkbox is only rendered when `hasPermission('canViewStudentPasswords')`, matching the existing Login Cards button gating in `StudentList.tsx`.
+
+---
+
 ## [1.28.12] - 2026-08-14
 
 ### Added

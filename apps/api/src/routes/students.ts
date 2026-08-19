@@ -358,7 +358,8 @@ const STUDENT_EXPORT_FIELDS: Record<string, { header: string; width: number }> =
   email: { header: 'Email', width: 28 },
   username: { header: 'Username', width: 18 },
   edupassUsername: { header: 'Edupass Username', width: 20 },
-  birthdate: { header: 'Birthdate', width: 14 }
+  birthdate: { header: 'Birthdate', width: 14 },
+  password: { header: 'Password', width: 16 }
 };
 
 const ASSET_EXPORT_FIELDS: Record<string, { header: string; width: number }> = {
@@ -422,7 +423,10 @@ router.get('/export', async (req: Request, res: Response) => {
       ? fieldsParam.split(',').map((f) => f.trim()).filter(Boolean)
       : [...DEFAULT_STUDENT_EXPORT_FIELDS, ...DEFAULT_ASSET_EXPORT_FIELDS];
 
-    const studentFields = requestedFields.filter((f) => f in STUDENT_EXPORT_FIELDS);
+    const canViewPasswords = canViewStudentPasswords(req);
+    const studentFields = requestedFields.filter(
+      (f) => f in STUDENT_EXPORT_FIELDS && (f !== 'password' || canViewPasswords)
+    );
     const assetFields = requestedFields.filter((f) => f in ASSET_EXPORT_FIELDS);
 
     if (studentFields.length === 0 && assetFields.length === 0) {
@@ -488,7 +492,7 @@ router.get('/export', async (req: Request, res: Response) => {
       }
     }
 
-    if (studentFields.includes('birthdate')) worksheet.getColumn('student_birthdate').numFmt = 'yyyy-mm-dd';
+    if (studentFields.includes('birthdate')) worksheet.getColumn('student_birthdate').numFmt = 'dd-mm-yyyy';
     if (assetFields.includes('acquiredDate')) worksheet.getColumn('asset_acquiredDate').numFmt = 'yyyy-mm-dd';
     if (assetFields.includes('warrantyExpiration')) worksheet.getColumn('asset_warrantyExpiration').numFmt = 'yyyy-mm-dd';
 
