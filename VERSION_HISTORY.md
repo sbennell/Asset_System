@@ -4,6 +4,19 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.28.15] - 2026-09-04
+
+### Fixed
+
+- Edit/Add Asset dropdowns (Manufacturer, Category, Location, Supplier) could load empty and stay that way until a hard refresh, with no indication anything had failed. Root cause was two-fold: the API's SQLite connection had no WAL mode or busy timeout configured, so a burst of concurrent reads on page load could occasionally collide with a write (e.g. the student-import watcher) and fail with "database is locked"; and the form silently swallowed that failure instead of surfacing it.
+
+### Technical Details
+
+- `apps/api/src/index.ts`: sets `PRAGMA journal_mode = WAL` and `PRAGMA busy_timeout = 5000` on the Prisma connection at startup, so readers no longer block on an in-flight writer and brief lock contention is retried instead of failing immediately.
+- `apps/web/src/pages/AssetForm.tsx`: the four lookup queries (`categories`, `manufacturers`, `suppliers`, `locations`) now retry up to 3 times and surface a dismissable "failed to load" banner with a Retry button when they still error out, instead of leaving the corresponding `<select>` silently empty.
+
+---
+
 ## [1.28.14] - 2026-08-20
 
 ### Changed

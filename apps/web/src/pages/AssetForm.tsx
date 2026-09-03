@@ -97,22 +97,34 @@ export default function AssetForm() {
   });
 
   // Fetch lookups
-  const { data: categories } = useQuery({
+  const { data: categories, error: categoriesError, refetch: refetchCategories } = useQuery({
     queryKey: ['categories'],
-    queryFn: api.getCategories
+    queryFn: api.getCategories,
+    retry: 3
   });
-  const { data: manufacturers } = useQuery({
+  const { data: manufacturers, error: manufacturersError, refetch: refetchManufacturers } = useQuery({
     queryKey: ['manufacturers'],
-    queryFn: api.getManufacturers
+    queryFn: api.getManufacturers,
+    retry: 3
   });
-  const { data: suppliers } = useQuery({
+  const { data: suppliers, error: suppliersError, refetch: refetchSuppliers } = useQuery({
     queryKey: ['suppliers'],
-    queryFn: api.getSuppliers
+    queryFn: api.getSuppliers,
+    retry: 3
   });
-  const { data: locations } = useQuery({
+  const { data: locations, error: locationsError, refetch: refetchLocations } = useQuery({
     queryKey: ['locations'],
-    queryFn: api.getLocations
+    queryFn: api.getLocations,
+    retry: 3
   });
+
+  const lookupsError = categoriesError || manufacturersError || suppliersError || locationsError;
+  const refetchLookups = () => {
+    refetchCategories();
+    refetchManufacturers();
+    refetchSuppliers();
+    refetchLocations();
+  };
 
   // Prefill next item number for new assets
   useEffect(() => {
@@ -330,6 +342,20 @@ export default function AssetForm() {
         {mutation.error && (
           <div className="rounded-md bg-red-50 p-4">
             <p className="text-sm text-red-700">{(mutation.error as Error).message}</p>
+          </div>
+        )}
+        {lookupsError && (
+          <div className="rounded-md bg-yellow-50 p-4 flex items-center justify-between gap-4">
+            <p className="text-sm text-yellow-700">
+              Some dropdown options (manufacturer, category, location, or supplier) failed to load.
+            </p>
+            <button
+              type="button"
+              onClick={refetchLookups}
+              className="text-sm font-medium text-yellow-800 underline whitespace-nowrap"
+            >
+              Retry
+            </button>
           </div>
         )}
 

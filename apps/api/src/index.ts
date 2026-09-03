@@ -21,6 +21,16 @@ import { startStudentImportWatcher, closeStudentImportWatcher } from './services
 
 const app = express();
 const prisma = new PrismaClient();
+
+// SQLite's default rollback-journal mode blocks all readers while any write is in
+// flight, which surfaces as intermittent "database is locked" failures when requests
+// overlap with a write (e.g. dropdown lookups firing alongside the student-import
+// watcher). WAL mode lets readers and a single writer proceed concurrently, and
+// busy_timeout makes a write wait briefly for a lock instead of failing immediately.
+prisma.$executeRawUnsafe('PRAGMA journal_mode = WAL;')
+  .then(() => prisma.$executeRawUnsafe('PRAGMA busy_timeout = 5000;'))
+  .catch((err) => console.error('Failed to configure SQLite pragmas:', err));
+
 const PORT = process.env.PORT || 3001;
 const isProduction = process.env.NODE_ENV === 'production';
 
