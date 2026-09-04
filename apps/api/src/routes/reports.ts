@@ -43,13 +43,32 @@ router.get('/warranty', async (req: Request, res: Response) => {
     const now = new Date();
     const thresholdDate = new Date(now.getTime() + daysNum * 24 * 60 * 60 * 1000);
 
-    const where = buildBaseWhere(category as string, location as string);
+    const classify = (warrantyExpiration: Date | null): { daysUntilExpiry: number | null; warrantyStatus: 'no_warranty' | 'expired' | 'expiring_soon' | 'ok' } => {
+      if (!warrantyExpiration) {
+        return { daysUntilExpiry: null, warrantyStatus: 'no_warranty' };
+      }
+      const daysUntilExpiry = Math.floor((warrantyExpiration.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
+      const warrantyStatus = daysUntilExpiry < 0 ? 'expired' : daysUntilExpiry <= daysNum ? 'expiring_soon' : 'ok';
+      return { daysUntilExpiry, warrantyStatus };
+    };
 
-    // Get total count and assets
-    const [total, assets] = await Promise.all([
-      prisma.asset.count({ where }),
+    // baseWhere scopes the summary/chart to everything matching category/location,
+    // independent of the days threshold, so "OK" and the timeline still show the
+    // full picture. listWhere additionally restricts the table to assets that
+    // actually need attention (no warranty on file, expired, or expiring within
+    // `days`) so changing the Days filter visibly changes which rows are shown.
+    const baseWhere = buildBaseWhere(category as string, location as string);
+    const listWhere: Prisma.AssetWhereInput = {
+      ...baseWhere,
+      OR: [{ warrantyExpiration: null }, { warrantyExpiration: { lte: thresholdDate } }]
+    };
+
+    // Get total count and paginated assets for the table, plus the full
+    // category/location-scoped set (warranty date only) for aggregations
+    const [total, assets, allAssets] = await Promise.all([
+      prisma.asset.count({ where: listWhere }),
       prisma.asset.findMany({
-        where,
+        where: listWhere,
         skip: skipNum,
         take: limitNum,
         include: {
@@ -58,29 +77,13 @@ router.get('/warranty', async (req: Request, res: Response) => {
           location: true
         },
         orderBy: { itemNumber: 'asc' }
-      })
+      }),
+      prisma.asset.findMany({ where: baseWhere, select: { warrantyExpiration: true } })
     ]);
 
     // Process assets to compute warranty status
     const processedAssets = assets.map((asset) => {
-      let daysUntilExpiry: number | null = null;
-      let warrantyStatus: 'no_warranty' | 'expired' | 'expiring_soon' | 'ok';
-
-      if (!asset.warrantyExpiration) {
-        warrantyStatus = 'no_warranty';
-      } else {
-        daysUntilExpiry = Math.floor(
-          (asset.warrantyExpiration.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)
-        );
-
-        if (daysUntilExpiry < 0) {
-          warrantyStatus = 'expired';
-        } else if (daysUntilExpiry <= daysNum) {
-          warrantyStatus = 'expiring_soon';
-        } else {
-          warrantyStatus = 'ok';
-        }
-      }
+      const { daysUntilExpiry, warrantyStatus } = classify(asset.warrantyExpiration);
 
       return {
         id: asset.id,
@@ -97,22 +100,24 @@ router.get('/warranty', async (req: Request, res: Response) => {
       };
     });
 
-    // Group by warranty month
+    // Group by warranty month (full category/location-scoped set, not just this page)
     const byMonth = new Map<string, number>();
-    assets.forEach((asset) => {
+    allAssets.forEach((asset) => {
       if (asset.warrantyExpiration) {
         const yearMonth = asset.warrantyExpiration.toISOString().slice(0, 7);
         byMonth.set(yearMonth, (byMonth.get(yearMonth) || 0) + 1);
       }
     });
 
-    // Compute summary
-    const summary = {
-      noWarranty: processedAssets.filter((a) => a.warrantyStatus === 'no_warranty').length,
-      expired: processedAssets.filter((a) => a.warrantyStatus === 'expired').length,
-      expiringSoon: processedAssets.filter((a) => a.warrantyStatus === 'expiring_soon').length,
-      ok: processedAssets.filter((a) => a.warrantyStatus === 'ok').length
-    };
+    // Compute summary (full category/location-scoped set, not just this page)
+    const summary = { noWarranty: 0, expired: 0, expiringSoon: 0, ok: 0 };
+    allAssets.forEach((asset) => {
+      const { warrantyStatus } = classify(asset.warrantyExpiration);
+      if (warrantyStatus === 'no_warranty') summary.noWarranty++;
+      else if (warrantyStatus === 'expired') summary.expired++;
+      else if (warrantyStatus === 'expiring_soon') summary.expiringSoon++;
+      else summary.ok++;
+    });
 
     res.json({
       summary,
@@ -580,11 +585,37 @@ router.get('/stocktake-review', async (req: Request, res: Response) => {
 
     const where = buildBaseWhere(category as string, location as string);
 
+    // Helper to compute review status
+    function getReviewStatus(lastReviewDate: Date | null): 'reviewed' | 'overdue' | 'never' {
+      if (!lastReviewDate) return 'never';
+      if (lastReviewDate < overdueDate) return 'overdue';
+      return 'reviewed';
+    }
+
+    // The table is further restricted by status/year (on top of category/location),
+    // while summary/byYear below stay scoped to category/location only so they keep
+    // showing the full breakdown regardless of which slice the table is showing.
+    const listConditions: Prisma.AssetWhereInput[] = [];
+    if (status === 'never') {
+      listConditions.push({ lastReviewDate: null });
+    } else if (status === 'overdue') {
+      listConditions.push({ lastReviewDate: { lt: overdueDate } });
+    } else if (status === 'reviewed') {
+      listConditions.push({ lastReviewDate: { gte: overdueDate } });
+    }
+    if (year) {
+      const yearNum = parseInt(year as string, 10);
+      listConditions.push({
+        lastReviewDate: { gte: new Date(yearNum, 0, 1), lt: new Date(yearNum + 1, 0, 1) }
+      });
+    }
+    const listWhere: Prisma.AssetWhereInput = listConditions.length > 0 ? { ...where, AND: listConditions } : where;
+
     // Get total count and paginated assets
     const [total, assets] = await Promise.all([
-      prisma.asset.count({ where }),
+      prisma.asset.count({ where: listWhere }),
       prisma.asset.findMany({
-        where,
+        where: listWhere,
         skip: skipNum,
         take: limitNum,
         include: {
@@ -595,13 +626,6 @@ router.get('/stocktake-review', async (req: Request, res: Response) => {
         orderBy: { itemNumber: 'asc' }
       })
     ]);
-
-    // Helper to compute review status
-    function getReviewStatus(lastReviewDate: Date | null): 'reviewed' | 'overdue' | 'never' {
-      if (!lastReviewDate) return 'never';
-      if (lastReviewDate < overdueDate) return 'overdue';
-      return 'reviewed';
-    }
 
     // Process assets
     const processedAssets = assets.map((asset) => {
@@ -626,21 +650,9 @@ router.get('/stocktake-review', async (req: Request, res: Response) => {
       };
     });
 
-    // Get all assets for aggregations
+    // Get all category/location-scoped assets for aggregations (independent of the
+    // status/year filter applied to the table above)
     const allAssets = await prisma.asset.findMany({ where });
-
-    // Filter by status if provided
-    const filteredAssets = status
-      ? allAssets.filter((a) => {
-          const reviewStatus = getReviewStatus(a.lastReviewDate);
-          return reviewStatus === status;
-        })
-      : allAssets;
-
-    // Filter by year if provided
-    const filteredByYear = year
-      ? filteredAssets.filter((a) => a.lastReviewDate && a.lastReviewDate.getFullYear() === parseInt(year as string))
-      : filteredAssets;
 
     // Compute summary
     const reviewedThisYear = allAssets.filter(

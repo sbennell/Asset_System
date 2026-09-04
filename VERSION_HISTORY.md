@@ -4,6 +4,20 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.28.16] - 2026-09-04
+
+### Fixed
+
+- Warranty Expiry report: the "Days Until Expiry" filter only relabeled each asset's status badge — it never actually filtered the table, so the list looked identical no matter what value you entered. It now excludes assets whose warranty is comfortably in the future, so the table (and its total count) actually shrinks/grows as you change the threshold. The summary cards and expiration timeline chart were also silently computed from just the current page of results instead of the full matching set, so they under-reported whenever there was more than one page.
+- Stocktake Review report: the Review Status and Review Year filters were computed but never applied to the table - a leftover `filteredAssets`/`filteredByYear` calculation whose result was discarded, so the table always showed every asset regardless of what you selected. They now correctly filter the table.
+
+### Technical Details
+
+- `apps/api/src/routes/reports.ts` (`GET /warranty`): added `listWhere` (category/location plus `warrantyExpiration IS NULL OR <= thresholdDate`) for the paginated table/count, while `baseWhere` (category/location only) now drives the summary and `byMonth` chart via a dedicated `allAssets` query instead of the paginated slice.
+- `apps/api/src/routes/reports.ts` (`GET /stocktake-review`): added `listWhere` that layers `status`/`year` conditions (via Prisma `AND`) onto the paginated table/count; removed the dead `filteredAssets`/`filteredByYear` variables. `summary`/`byYear` remain scoped to category/location only, unaffected by the status/year filter, matching the Warranty report's pattern.
+
+---
+
 ## [1.28.15] - 2026-09-04
 
 ### Fixed

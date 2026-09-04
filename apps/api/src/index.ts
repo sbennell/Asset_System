@@ -27,8 +27,10 @@ const prisma = new PrismaClient();
 // overlap with a write (e.g. dropdown lookups firing alongside the student-import
 // watcher). WAL mode lets readers and a single writer proceed concurrently, and
 // busy_timeout makes a write wait briefly for a lock instead of failing immediately.
-prisma.$executeRawUnsafe('PRAGMA journal_mode = WAL;')
-  .then(() => prisma.$executeRawUnsafe('PRAGMA busy_timeout = 5000;'))
+// Both PRAGMAs return the new setting as a result row, which SQLite only allows
+// through a query (not $executeRaw, which rejects statements that return rows).
+prisma.$queryRawUnsafe('PRAGMA journal_mode = WAL;')
+  .then(() => prisma.$queryRawUnsafe('PRAGMA busy_timeout = 5000;'))
   .catch((err) => console.error('Failed to configure SQLite pragmas:', err));
 
 const PORT = process.env.PORT || 3001;
