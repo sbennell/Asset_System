@@ -93,10 +93,6 @@ export default function StocktakeReviewTab() {
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-gray-500">
-        Also satisfies the MACS annual asset register review requirement - use the Overdue Threshold below to check assets not reviewed in the last 12 months.
-      </p>
-
       {/* Filters */}
       <div className="card p-4 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">

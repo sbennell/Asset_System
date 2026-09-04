@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.28.17] - 2026-09-04
+
+### Changed
+
+- Removed the "Also satisfies the MACS annual asset register review requirement..." notice from the top of the Stocktake Review report tab.
+
+### Technical Details
+
+- `apps/web/src/pages/reports/StocktakeReviewTab.tsx`: removed the `<p>` element with that copy.
+
+---
+
 ## [1.28.16] - 2026-09-04
 
 ### Fixed
