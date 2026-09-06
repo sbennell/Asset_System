@@ -440,12 +440,12 @@ export async function buildDymoLabelManagerXml(asset: LabelAsset, settings: Part
   const { qrContent, assignedText, itemText, modelText, serialText, hostIpText, orgText } = deriveLabelFields(asset, opts);
 
   const lines: { text: string; size: number; bold: boolean }[] = [];
-  if (assignedText) lines.push({ text: assignedText, size: 10, bold: true });
-  lines.push({ text: itemText, size: 8, bold: true });
+  if (assignedText) lines.push({ text: assignedText, size: 10, bold: false });
+  lines.push({ text: itemText, size: 8, bold: false });
   if (modelText) lines.push({ text: modelText, size: 8, bold: false });
   if (serialText) lines.push({ text: serialText, size: 8, bold: false });
   if (hostIpText) lines.push({ text: hostIpText, size: 7, bold: false });
-  if (orgText) lines.push({ text: orgText, size: 10, bold: true });
+  if (orgText) lines.push({ text: orgText, size: 10, bold: false });
 
   const contentWidth = LABELMANAGER_QR_SIZE_IN + LABELMANAGER_TEXT_WIDTH_IN;
   const initialLength = LABELMANAGER_LEADER_IN * 2 + contentWidth;

@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.28.21] - 2026-09-07
+
+### Changed
+
+- DYMO LabelManager Executive 640 label: all text lines (Assigned To, Item Number, Model, Serial Number, Hostname/IP, Organization) now print regular weight instead of some lines being bold.
+
+### Technical Details
+
+- `apps/api/src/services/labelService-dymo.ts`: `buildDymoLabelManagerXml()`'s `lines` array now sets `bold: false` for every field.
+
+---
+
 ## [1.28.20] - 2026-09-07
 
 ### Fixed
