@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.28.23] - 2026-09-07
+
+### Changed
+
+- DYMO LabelManager Executive 640 label: QR code density set to `Large` instead of `Medium` so it fills its allotted space more tightly (the box itself is already at the tape's max usable print height, so this was the only remaining lever to make it look bigger).
+
+### Technical Details
+
+- `apps/api/src/services/labelService-dymo.ts`: `buildDymoLabelManagerXml()`'s `QRCodeObject` `Size` element changed from `Medium` to `Large`.
+
+---
+
 ## [1.28.22] - 2026-09-07
 
 ### Changed

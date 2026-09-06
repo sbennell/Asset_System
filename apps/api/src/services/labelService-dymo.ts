@@ -494,7 +494,7 @@ export async function buildDymoLabelManagerXml(asset: LabelAsset, settings: Part
           <Data><DataString>${escapeXml(qrContent)}</DataString></Data>
           <HorizontalAlignment>Center</HorizontalAlignment>
           <VerticalAlignment>Middle</VerticalAlignment>
-          <Size>Medium</Size>
+          <Size>Large</Size>
           <EQRCodeType>QRCodeText</EQRCodeType>
           <TextDataHolder><Value>${escapeXml(qrContent)}</Value></TextDataHolder>
           <ObjectLayout>
