@@ -116,6 +116,46 @@ function escapeXml(str: string): string {
   }[c] || c));
 }
 
+interface LabelFields {
+  qrContent: string;
+  assignedText: string;
+  itemText: string;
+  modelText: string;
+  serialText: string;
+  hostIpText: string;
+  orgText: string;
+}
+
+// Shared by both label builders below (DieCutLabel twips schema and the LabelManager's
+// DesktopLabel inches schema) so the two devices show the same asset fields.
+function deriveLabelFields(asset: LabelAsset, opts: LabelSettings): LabelFields {
+  const qrContent = buildQRContent(asset, opts);
+  const assignedText = opts.showAssignedTo && asset.assignedTo
+    ? escapeXml(asset.assignedTo.substring(0, 28))
+    : '';
+  const itemText = `Item: ${escapeXml(asset.itemNumber.substring(0, 25))}`;
+  const modelText = asset.model
+    ? escapeXml((asset.manufacturer?.name ? `${asset.manufacturer.name} ` : '') + asset.model)
+    : '';
+  const serialText = asset.serialNumber
+    ? `S/N: ${escapeXml(asset.serialNumber.substring(0, 25))}`
+    : '';
+  const hostnameText = opts.showHostname && asset.hostname
+    ? escapeXml(asset.hostname.substring(0, 30))
+    : '';
+  const ipText = opts.showIpAddress && asset.ipAddress
+    ? escapeXml(asset.ipAddress.substring(0, 30))
+    : '';
+  let hostIpText = hostnameText;
+  if (ipText) {
+    hostIpText = hostIpText ? `${hostIpText} \\ ${ipText}` : ipText;
+  }
+  const orgText = asset.organizationName
+    ? escapeXml(asset.organizationName.substring(0, 40))
+    : '';
+  return { qrContent, assignedText, itemText, modelText, serialText, hostIpText, orgText };
+}
+
 interface AddressLabelLayout {
   paperName: string;
   widthTwips: number;
@@ -145,33 +185,12 @@ async function buildAddressStyleLabelXml(
   const scX = (n: number) => Math.round(n * sx);
   const scY = (n: number) => Math.round(n * sy);
   const scFont = (n: number) => Math.max(4, Math.round(n * sy));
-  const qrContent = buildQRContent(asset, opts);
+  const { qrContent, assignedText, itemText, modelText, serialText, hostIpText, orgText } = deriveLabelFields(asset, opts);
   // DYMO's native BarcodeObject doesn't reliably honor Bounds for QR sizing (its
   // internal "Size: Large" auto-sizing clips/shrinks unpredictably regardless of the
   // requested Bounds) - render the QR as a PNG instead and embed it as an ImageObject,
   // which scales predictably to Bounds via ScaleMode=Fill.
   const qrPngBase64 = (await generateQRCode(qrContent, 300)).toString('base64');
-
-  const assignedText = opts.showAssignedTo && asset.assignedTo
-    ? escapeXml(asset.assignedTo.substring(0, 28))
-    : '';
-  const itemText = `Item: ${escapeXml(asset.itemNumber.substring(0, 25))}`;
-  const modelText = asset.model
-    ? escapeXml((asset.manufacturer?.name ? `${asset.manufacturer.name} ` : '') + asset.model)
-    : '';
-  const serialText = asset.serialNumber
-    ? `S/N: ${escapeXml(asset.serialNumber.substring(0, 25))}`
-    : '';
-  const hostnameText = opts.showHostname && asset.hostname
-    ? escapeXml(asset.hostname.substring(0, 30))
-    : '';
-  const ipText = opts.showIpAddress && asset.ipAddress
-    ? escapeXml(asset.ipAddress.substring(0, 30))
-    : '';
-  let hostIpText = hostnameText;
-  if (ipText) {
-    hostIpText = hostIpText ? `${hostIpText} \\ ${ipText}` : ipText;
-  }
 
   // When Hostname/IP isn't shown, redistribute its row to Item Number/Model/Serial
   // Number instead of leaving the space blank.
@@ -184,10 +203,6 @@ async function buildAddressStyleLabelXml(
   const hostIpY = 1020;
   const hostIpHeight = 200;
   const hostIpSize = 10;
-
-  const orgText = asset.organizationName
-    ? escapeXml(asset.organizationName.substring(0, 40))
-    : '';
 
   return `<?xml version="1.0" encoding="utf-8"?>
 <DieCutLabel Version="8.0" Units="twips">
@@ -395,23 +410,160 @@ export async function buildDymoLabelXml(asset: LabelAsset, settings: Partial<Lab
   });
 }
 
-// LabelManager Executive 640 uses 24mm D1 tape (~1360 twips) and prints a shorter,
-// narrower label than the 1933081 address label - width/layout is unverified against
-// real hardware and expected to need tuning once tested on the printer.
-const LABELMANAGER_WIDTH_TWIPS = 2880; // 2in print length (auto-cut)
-const LABELMANAGER_HEIGHT_TWIPS = 1360; // 24mm tape
+// The LabelManager Executive 640 is a continuous D1-tape device, not a die-cut
+// LabelWriter - DYMO Connect only accepts continuous-media labels in its newer
+// DesktopLabel/DYMOLabel/ContinuousLayoutManager schema (inches, not twips; see
+// buildAddressStyleLabelXml above for the twips-based DieCutLabel schema used by the
+// 1933081). The constants below (tape preset name, leader/trailer, usable print area)
+// were read directly off a label exported from DYMO Connect Desktop for this printer/
+// tape - DYMO computes and bakes them into every label for this tape preset, they
+// aren't values we chose, so they should hold for any label using the same cassette.
+const LABELMANAGER_TAPE_NAME = '24X7-TAPE BLACK/WHITE';
+const LABELMANAGER_LEADER_IN = 0.41666666; // 10mm leader/trailer (DYMO's "Center" tape alignment)
+const LABELMANAGER_TOP_MARGIN_IN = 0.116666645; // vertical inset baked into the 24mm tape preset
+const LABELMANAGER_CONTENT_HEIGHT_IN = 0.71111107; // usable print height for 24mm tape
+const LABELMANAGER_QR_SIZE_IN = LABELMANAGER_CONTENT_HEIGHT_IN;
+const LABELMANAGER_TEXT_WIDTH_IN = 1.8; // chosen to fit the text lines below; tune once tested
+
+function dymoBlackBrush(): string {
+  return '<SolidColorBrush><Color A="1" R="0" G="0" B="0"></Color></SolidColorBrush>';
+}
 
 /**
  * Build a native DYMO label XML for the LabelManager Executive 640 (24mm tape),
- * printed via DYMO Connect's Tape printer API (see dymoLabelPrinter.ts). Same
- * layout as the 1933081 address label, scaled down to fit the narrower tape.
+ * printed via DYMO Connect's Tape printer API (see dymoLabelPrinter.ts). Uses a
+ * native QRCodeObject - DYMO renders the QR itself - rather than the rasterized-PNG
+ * workaround the DieCutLabel schema above needs for its BarcodeObject.
  */
 export async function buildDymoLabelManagerXml(asset: LabelAsset, settings: Partial<LabelSettings> = {}): Promise<string> {
-  return buildAddressStyleLabelXml(asset, settings, {
-    paperName: 'LabelManager 24mm Tape',
-    widthTwips: LABELMANAGER_WIDTH_TWIPS,
-    heightTwips: LABELMANAGER_HEIGHT_TWIPS,
-  });
+  const opts = { ...DEFAULT_SETTINGS, ...settings };
+  const { qrContent, assignedText, itemText, modelText, serialText, hostIpText, orgText } = deriveLabelFields(asset, opts);
+
+  const lines: { text: string; size: number; bold: boolean }[] = [];
+  if (assignedText) lines.push({ text: assignedText, size: 10, bold: true });
+  lines.push({ text: itemText, size: 8, bold: true });
+  if (modelText) lines.push({ text: modelText, size: 8, bold: false });
+  if (serialText) lines.push({ text: serialText, size: 8, bold: false });
+  if (hostIpText) lines.push({ text: hostIpText, size: 7, bold: false });
+  if (orgText) lines.push({ text: orgText, size: 10, bold: true });
+
+  const contentWidth = LABELMANAGER_QR_SIZE_IN + LABELMANAGER_TEXT_WIDTH_IN;
+  const initialLength = LABELMANAGER_LEADER_IN * 2 + contentWidth;
+  const textX = LABELMANAGER_LEADER_IN + LABELMANAGER_QR_SIZE_IN;
+
+  return `<?xml version="1.0" encoding="utf-8"?>
+<DesktopLabel Version="1">
+  <DYMOLabel Version="4">
+    <Description>DYMO Label</Description>
+    <Orientation>Landscape</Orientation>
+    <LabelName>${LABELMANAGER_TAPE_NAME}</LabelName>
+    <InitialLength>${initialLength}</InitialLength>
+    <BorderStyle>SolidLine</BorderStyle>
+    <DYMORect>
+      <DYMOPoint>
+        <X>${LABELMANAGER_LEADER_IN}</X>
+        <Y>${LABELMANAGER_TOP_MARGIN_IN}</Y>
+      </DYMOPoint>
+      <Size>
+        <Width>${contentWidth}</Width>
+        <Height>${LABELMANAGER_CONTENT_HEIGHT_IN}</Height>
+      </Size>
+    </DYMORect>
+    <BorderColor>${dymoBlackBrush()}</BorderColor>
+    <BorderThickness>1</BorderThickness>
+    <Show_Border>False</Show_Border>
+    <HasFixedLength>False</HasFixedLength>
+    <FixedLengthValue>0</FixedLengthValue>
+    <ContinuousLayoutManager>
+      <RotationBehavior>ClearObjects</RotationBehavior>
+      <LabelObjects>
+        <QRCodeObject>
+          <Name>QRCode</Name>
+          <Brushes>
+            <BackgroundBrush><SolidColorBrush><Color A="1" R="1" G="1" B="1"></Color></SolidColorBrush></BackgroundBrush>
+            <BorderBrush>${dymoBlackBrush()}</BorderBrush>
+            <StrokeBrush>${dymoBlackBrush()}</StrokeBrush>
+            <FillBrush>${dymoBlackBrush()}</FillBrush>
+          </Brushes>
+          <Rotation>Rotation0</Rotation>
+          <OutlineThickness>1</OutlineThickness>
+          <IsOutlined>False</IsOutlined>
+          <BorderStyle>SolidLine</BorderStyle>
+          <Margin><DYMOThickness Left="0" Top="0" Right="0" Bottom="0" /></Margin>
+          <BarcodeFormat>QRCode</BarcodeFormat>
+          <Data><DataString>${escapeXml(qrContent)}</DataString></Data>
+          <HorizontalAlignment>Center</HorizontalAlignment>
+          <VerticalAlignment>Middle</VerticalAlignment>
+          <Size>Medium</Size>
+          <EQRCodeType>QRCodeText</EQRCodeType>
+          <TextDataHolder><Value>${escapeXml(qrContent)}</Value></TextDataHolder>
+          <ObjectLayout>
+            <DYMOPoint>
+              <X>${LABELMANAGER_LEADER_IN}</X>
+              <Y>${LABELMANAGER_TOP_MARGIN_IN}</Y>
+            </DYMOPoint>
+            <Size>
+              <Width>${LABELMANAGER_QR_SIZE_IN}</Width>
+              <Height>${LABELMANAGER_CONTENT_HEIGHT_IN}</Height>
+            </Size>
+          </ObjectLayout>
+        </QRCodeObject>
+        <TextObject>
+          <Name>Details</Name>
+          <Brushes>
+            <BackgroundBrush><SolidColorBrush><Color A="0" R="0" G="0" B="0"></Color></SolidColorBrush></BackgroundBrush>
+            <BorderBrush>${dymoBlackBrush()}</BorderBrush>
+            <StrokeBrush>${dymoBlackBrush()}</StrokeBrush>
+            <FillBrush><SolidColorBrush><Color A="0" R="0" G="0" B="0"></Color></SolidColorBrush></FillBrush>
+          </Brushes>
+          <Rotation>Rotation0</Rotation>
+          <OutlineThickness>1</OutlineThickness>
+          <IsOutlined>False</IsOutlined>
+          <BorderStyle>SolidLine</BorderStyle>
+          <Margin><DYMOThickness Left="0" Top="0" Right="0" Bottom="0" /></Margin>
+          <HorizontalAlignment>Center</HorizontalAlignment>
+          <VerticalAlignment>Middle</VerticalAlignment>
+          <FitMode>AlwaysFit</FitMode>
+          <IsVertical>False</IsVertical>
+          <FormattedText>
+            <FitMode>AlwaysFit</FitMode>
+            <HorizontalAlignment>Center</HorizontalAlignment>
+            <VerticalAlignment>Middle</VerticalAlignment>
+            <IsVertical>False</IsVertical>
+            ${lines.map(line => `<LineTextSpan>
+              <TextSpan>
+                <Text>${line.text}</Text>
+                <FontInfo>
+                  <FontName>Arial</FontName>
+                  <FontSize>${line.size}</FontSize>
+                  <IsBold>${line.bold ? 'True' : 'False'}</IsBold>
+                  <IsItalic>False</IsItalic>
+                  <IsUnderline>False</IsUnderline>
+                  <FontBrush>${dymoBlackBrush()}</FontBrush>
+                </FontInfo>
+              </TextSpan>
+            </LineTextSpan>`).join('\n            ')}
+          </FormattedText>
+          <ObjectLayout>
+            <DYMOPoint>
+              <X>${textX}</X>
+              <Y>${LABELMANAGER_TOP_MARGIN_IN}</Y>
+            </DYMOPoint>
+            <Size>
+              <Width>${LABELMANAGER_TEXT_WIDTH_IN}</Width>
+              <Height>${LABELMANAGER_CONTENT_HEIGHT_IN}</Height>
+            </Size>
+          </ObjectLayout>
+        </TextObject>
+      </LabelObjects>
+    </ContinuousLayoutManager>
+  </DYMOLabel>
+  <LabelApplication>Blank</LabelApplication>
+  <DataTable>
+    <Columns></Columns>
+    <Rows></Rows>
+  </DataTable>
+</DesktopLabel>`;
 }
 
 /**

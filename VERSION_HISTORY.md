@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.28.20] - 2026-09-07
+
+### Fixed
+
+- DYMO LabelManager Executive 640 printing still failed after the cutMode fix, now with "Invalid label file: The 'DieCutLabel' element is not declared." DYMO Connect only recognizes continuous-media (tape) labels in a completely different XML schema than the die-cut LabelWriter schema the 1933081 label (and the LabelManager builder up to this point) used - `<DesktopLabel><DYMOLabel><ContinuousLayoutManager>...` (measured in inches) rather than `<DieCutLabel Version="8.0" Units="twips">`. Confirmed by exporting a real label from DYMO Connect Desktop for this exact printer and tape cassette ("24X7-TAPE BLACK/WHITE"), and cross-checked against DYMO's public SDK samples for the QR code object shape.
+
+### Technical Details
+
+- `apps/api/src/services/labelService-dymo.ts`: rewrote `buildDymoLabelManagerXml()` to emit the `DesktopLabel`/`DYMOLabel`/`ContinuousLayoutManager` schema instead of scaling the `DieCutLabel` template. Layout constants (tape leader/trailer of 10mm, top/bottom margin, usable print height for 24mm tape) were read directly off the label DYMO Connect Desktop itself generated for this printer, rather than guessed. Uses a native `QRCodeObject` (DYMO renders the QR itself) instead of the rasterized-PNG `ImageObject` workaround the old schema needs. Extracted the asset-field derivation (assigned-to/item/model/serial/hostname+IP/org text) shared by both builders into `deriveLabelFields()`.
+
+---
+
 ## [1.28.19] - 2026-09-07
 
 ### Fixed
