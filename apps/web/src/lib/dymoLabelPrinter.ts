@@ -35,7 +35,7 @@ interface DymoFramework {
   // LabelManager Executive 640 and other D1-tape devices are exposed as "Tape" printers
   // by DYMO Connect Framework, separate from the die-cut "LabelWriter" printer family.
   getTapePrintersAsync(): Promise<DymoTapePrinterInfo[]>;
-  createTapePrintParamsXml(params: { copies?: number; cutMode?: 'Auto' | 'None' }): string;
+  createTapePrintParamsXml(params: { copies?: number; cutMode?: 'AutoCut' | 'ChainMarks' }): string;
   printLabelAsync(printerName: string, printParamsXml: string, labelXml: string, labelSetXml: string): Promise<void>;
 }
 
@@ -157,7 +157,7 @@ export async function printDymoTapeLabel(xml: string, printerName: string, copie
   if (!framework) {
     throw new Error('DYMO SDK is not loaded');
   }
-  const printParamsXml = framework.createTapePrintParamsXml({ copies, cutMode: 'Auto' });
+  const printParamsXml = framework.createTapePrintParamsXml({ copies, cutMode: 'AutoCut' });
   await framework.printLabelAsync(printerName, printParamsXml, xml, '');
 }
 

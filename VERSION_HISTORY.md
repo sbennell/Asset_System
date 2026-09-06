@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.28.19] - 2026-09-07
+
+### Fixed
+
+- DYMO LabelManager Executive 640 printing failed with "Failed to execute webservice command: PrintLabel. Error: 400" - `printDymoTapeLabel()` was passing `cutMode: 'Auto'` to DYMO Connect's `createTapePrintParamsXml()`, which writes the value verbatim into the print params XML with no client-side validation. DYMO's actual `TapeCutMode` enum values are `AutoCut`/`ChainMarks`, so the local DYMO web service was receiving an invalid `<CutMode>Auto</CutMode>` and rejecting the whole print request.
+
+### Technical Details
+
+- `apps/web/src/lib/dymoLabelPrinter.ts`: `createTapePrintParamsXml` param type and `printDymoTapeLabel()`'s call now use `cutMode: 'AutoCut'` instead of `'Auto'`.
+
+---
+
 ## [1.28.18] - 2026-09-07
 
 ### Added
