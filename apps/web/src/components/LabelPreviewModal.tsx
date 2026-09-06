@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { X, Printer, Download, Loader2 } from 'lucide-react';
 import { api, Asset, LabelSettings } from '../lib/api';
-import { printDymoLabel, TwinTurboRoll } from '../lib/dymoLabelPrinter';
+import { printDymoLabel, printDymoTapeLabel, TwinTurboRoll } from '../lib/dymoLabelPrinter';
 import { useDymoPrinting } from '../hooks/useDymoPrinting';
 
 interface LabelPreviewModalProps {
@@ -15,6 +15,7 @@ interface LabelPreviewModalProps {
 const LABEL_DIMENSIONS_MM: Record<string, { width: number; height: number }> = {
   'brother-dk22211': { width: 62, height: 29 },
   'dymo-1933081': { width: 89, height: 25 },
+  'dymo-labelmanager': { width: 51, height: 24 },
 };
 const PREVIEW_PX_PER_MM = 4.3;
 
@@ -60,14 +61,19 @@ export default function LabelPreviewModal({ asset, onClose }: LabelPreviewModalP
     },
   });
 
-  // Check if DYMO label type is selected (per-print override, defaults from Settings)
-  const isDymo = labelOptions.labelType === 'dymo-1933081';
-  const dymo = useDymoPrinting(isDymo);
+  // Check if a DYMO label type is selected (per-print override, defaults from Settings)
+  const isDymo = labelOptions.labelType === 'dymo-1933081' || labelOptions.labelType === 'dymo-labelmanager';
+  const isLabelManager = labelOptions.labelType === 'dymo-labelmanager';
+  const dymo = useDymoPrinting(isDymo, isLabelManager ? 'tape' : 'labelwriter');
 
   const dymoPrintMutation = useMutation({
     mutationFn: async () => {
       const { xml } = await api.getDymoLabelXml(asset.id, labelOptions);
-      await printDymoLabel(xml, dymo.selectedPrinter, copies, dymo.isTwinTurbo ? dymo.selectedRoll : undefined);
+      if (isLabelManager) {
+        await printDymoTapeLabel(xml, dymo.selectedPrinter, copies);
+      } else {
+        await printDymoLabel(xml, dymo.selectedPrinter, copies, dymo.isTwinTurbo ? dymo.selectedRoll : undefined);
+      }
     },
     onSuccess: () => onClose(),
   });
@@ -87,7 +93,7 @@ export default function LabelPreviewModal({ asset, onClose }: LabelPreviewModalP
     setLabelOptions(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handleLabelTypeChange = (value: 'brother-dk22211' | 'dymo-1933081') => {
+  const handleLabelTypeChange = (value: 'brother-dk22211' | 'dymo-1933081' | 'dymo-labelmanager') => {
     setLabelOptions(prev => ({ ...prev, labelType: value }));
   };
 
@@ -167,11 +173,12 @@ export default function LabelPreviewModal({ asset, onClose }: LabelPreviewModalP
               <label className="label">Label Size</label>
               <select
                 value={labelOptions.labelType || 'brother-dk22211'}
-                onChange={(e) => handleLabelTypeChange(e.target.value as 'brother-dk22211' | 'dymo-1933081')}
+                onChange={(e) => handleLabelTypeChange(e.target.value as 'brother-dk22211' | 'dymo-1933081' | 'dymo-labelmanager')}
                 className="input"
               >
                 <option value="brother-dk22211">Brother DK-22211 (29×62mm)</option>
                 <option value="dymo-1933081">Dymo 1933081 (25×89mm)</option>
+                <option value="dymo-labelmanager">DYMO LabelManager Executive 640 (24mm tape)</option>
               </select>
             </div>
             <div>

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { X, Printer, Download, Loader2 } from 'lucide-react';
 import { api, BatchPrintResult, LabelSettings } from '../lib/api';
-import { printDymoLabel, TwinTurboRoll } from '../lib/dymoLabelPrinter';
+import { printDymoLabel, printDymoTapeLabel, TwinTurboRoll } from '../lib/dymoLabelPrinter';
 import { useDymoPrinting } from '../hooks/useDymoPrinting';
 
 interface BatchPrintModalProps {
@@ -46,9 +46,10 @@ export default function BatchPrintModal({ assetIds, onClose, onSuccess }: BatchP
     },
   });
 
-  // Check if DYMO label type is selected (per-print override, defaults from Settings)
-  const isDymo = labelOptions.labelType === 'dymo-1933081';
-  const dymo = useDymoPrinting(isDymo);
+  // Check if a DYMO label type is selected (per-print override, defaults from Settings)
+  const isDymo = labelOptions.labelType === 'dymo-1933081' || labelOptions.labelType === 'dymo-labelmanager';
+  const isLabelManager = labelOptions.labelType === 'dymo-labelmanager';
+  const dymo = useDymoPrinting(isDymo, isLabelManager ? 'tape' : 'labelwriter');
 
   const dymoPrintMutation = useMutation({
     mutationFn: async (): Promise<BatchPrintResult> => {
@@ -60,7 +61,11 @@ export default function BatchPrintModal({ assetIds, onClose, onSuccess }: BatchP
 
       for (const label of labels) {
         try {
-          await printDymoLabel(label.xml, dymo.selectedPrinter, 1, dymo.isTwinTurbo ? dymo.selectedRoll : undefined);
+          if (isLabelManager) {
+            await printDymoTapeLabel(label.xml, dymo.selectedPrinter, 1);
+          } else {
+            await printDymoLabel(label.xml, dymo.selectedPrinter, 1, dymo.isTwinTurbo ? dymo.selectedRoll : undefined);
+          }
           printed++;
         } catch (error) {
           failed++;
@@ -94,7 +99,7 @@ export default function BatchPrintModal({ assetIds, onClose, onSuccess }: BatchP
     setLabelOptions(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handleLabelTypeChange = (value: 'brother-dk22211' | 'dymo-1933081') => {
+  const handleLabelTypeChange = (value: 'brother-dk22211' | 'dymo-1933081' | 'dymo-labelmanager') => {
     setLabelOptions(prev => ({ ...prev, labelType: value }));
   };
 
@@ -119,11 +124,12 @@ export default function BatchPrintModal({ assetIds, onClose, onSuccess }: BatchP
             <label className="label">Label Size</label>
             <select
               value={labelOptions.labelType || 'brother-dk22211'}
-              onChange={(e) => handleLabelTypeChange(e.target.value as 'brother-dk22211' | 'dymo-1933081')}
+              onChange={(e) => handleLabelTypeChange(e.target.value as 'brother-dk22211' | 'dymo-1933081' | 'dymo-labelmanager')}
               className="input"
             >
               <option value="brother-dk22211">Brother DK-22211 (29×62mm)</option>
               <option value="dymo-1933081">Dymo 1933081 (25×89mm)</option>
+              <option value="dymo-labelmanager">DYMO LabelManager Executive 640 (24mm tape)</option>
             </select>
           </div>
 

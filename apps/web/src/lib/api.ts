@@ -254,7 +254,7 @@ export interface BulkUpdateResult {
 
 export interface LabelSettings {
   printerName: string;
-  labelType: 'brother-dk22211' | 'dymo-1933081';
+  labelType: 'brother-dk22211' | 'dymo-1933081' | 'dymo-labelmanager';
   showAssignedTo: boolean;
   showHostname: boolean;
   showIpAddress: boolean;
@@ -849,6 +849,7 @@ export const api = {
     if (settings?.showHostname !== undefined) params.set('showHostname', String(settings.showHostname));
     if (settings?.showIpAddress !== undefined) params.set('showIpAddress', String(settings.showIpAddress));
     if (settings?.qrCodeContent !== undefined) params.set('qrCodeContent', settings.qrCodeContent);
+    if (settings?.labelType === 'dymo-labelmanager') params.set('variant', 'labelmanager');
     const queryString = params.toString();
     return fetchJson<{ itemNumber: string; xml: string }>(`/labels/dymo-xml/${assetId}${queryString ? '?' + queryString : ''}`);
   },
@@ -859,6 +860,7 @@ export const api = {
     if (settings?.showHostname !== undefined) params.set('showHostname', String(settings.showHostname));
     if (settings?.showIpAddress !== undefined) params.set('showIpAddress', String(settings.showIpAddress));
     if (settings?.qrCodeContent !== undefined) params.set('qrCodeContent', settings.qrCodeContent);
+    if (settings?.labelType === 'dymo-labelmanager') params.set('variant', 'labelmanager');
     return fetchJson<{ labels: { assetId: string; itemNumber: string; xml: string }[]; notFound: string[] }>(`/labels/dymo-xml-batch?${params.toString()}`);
   },
   getLabelSettings: () => fetchJson<LabelSettings>('/labels/settings'),

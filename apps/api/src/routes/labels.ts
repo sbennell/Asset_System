@@ -17,7 +17,10 @@ import {
   createLabelPreview as createDymoPreview,
   printLabel as printDymo,
   buildDymoLabelXml,
+  buildDymoLabelManagerXml,
 } from '../services/labelService-dymo.js';
+
+const DYMO_LABEL_TYPES = new Set(['dymo-1933081', 'dymo-labelmanager']);
 
 const router = Router();
 
@@ -47,7 +50,7 @@ router.get('/preview/:assetId', requireAuth, requirePermission('canAccessAssets'
       settingsMap[s.key] = s.value;
     });
     const settings = parseSettings(settingsMap);
-    const labelTypeOverride = req.query.labelType as 'brother-dk22211' | 'dymo-1933081' | undefined;
+    const labelTypeOverride = req.query.labelType as 'brother-dk22211' | 'dymo-1933081' | 'dymo-labelmanager' | undefined;
     const finalSettings = { ...settings, ...(labelTypeOverride !== undefined && { labelType: labelTypeOverride }) };
 
     // Resolve first IP (all IPs are equal now)
@@ -60,7 +63,7 @@ router.get('/preview/:assetId', requireAuth, requirePermission('canAccessAssets'
     }
 
     // Select correct preview function based on label type
-    const createLabelPreview = finalSettings.labelType === 'dymo-1933081' ? createDymoPreview : createBrotherPreview;
+    const createLabelPreview = DYMO_LABEL_TYPES.has(finalSettings.labelType) ? createDymoPreview : createBrotherPreview;
     const previewBuffer = await createLabelPreview({ ...asset, ipAddress: primaryIP, assignedTo } as LabelAsset, finalSettings);
 
     res.setHeader('Content-Type', 'image/png');
@@ -112,7 +115,7 @@ router.post('/print/:assetId', requireAuth, requirePermission('canAccessAssets')
     };
 
     // Select correct service based on label type
-    const isDymo = finalSettings.labelType === 'dymo-1933081';
+    const isDymo = DYMO_LABEL_TYPES.has(finalSettings.labelType);
     const createLabelPDF = isDymo ? createDymoPDF : createBrotherPDF;
     const printLabel = isDymo ? printDymo : printBrother;
 
@@ -180,7 +183,7 @@ router.post('/print-batch', requireAuth, requirePermission('canAccessAssets'), a
     };
 
     // Select correct service based on label type
-    const isDymo = finalSettings.labelType === 'dymo-1933081';
+    const isDymo = DYMO_LABEL_TYPES.has(finalSettings.labelType);
     const createLabelPDF = isDymo ? createDymoPDF : createBrotherPDF;
     const printLabel = isDymo ? printDymo : printBrother;
 
@@ -254,7 +257,7 @@ router.get('/download-batch', requireAuth, requirePermission('canAccessAssets'),
     const showHostname = req.query.showHostname !== undefined ? req.query.showHostname === 'true' : undefined;
     const showIpAddress = req.query.showIpAddress !== undefined ? req.query.showIpAddress === 'true' : undefined;
     const qrCodeContent = req.query.qrCodeContent as 'full' | 'itemNumber' | undefined;
-    const labelType = req.query.labelType as 'brother-dk22211' | 'dymo-1933081' | undefined;
+    const labelType = req.query.labelType as 'brother-dk22211' | 'dymo-1933081' | 'dymo-labelmanager' | undefined;
 
     // Get label settings and organization name
     const settingsRecords = await prisma.settings.findMany({
@@ -280,7 +283,7 @@ router.get('/download-batch', requireAuth, requirePermission('canAccessAssets'),
     };
 
     // Select correct service based on label type
-    const isDymo = finalSettings.labelType === 'dymo-1933081';
+    const isDymo = DYMO_LABEL_TYPES.has(finalSettings.labelType);
     const createLabelPDF = isDymo ? createDymoPDF : createBrotherPDF;
 
     // Fetch all assets
@@ -379,6 +382,7 @@ router.get('/label-types', requireAuth, requirePermission('canAccessAssets'), as
     res.json([
       { id: 'brother-dk22211', name: 'Brother DK-22211 (29×62mm)' },
       { id: 'dymo-1933081', name: 'Dymo 1933081 (25×89mm)' },
+      { id: 'dymo-labelmanager', name: 'DYMO LabelManager Executive 640 (24mm tape)' },
     ]);
   } catch (error) {
     console.error('Get label types error:', error);
@@ -434,7 +438,7 @@ router.get('/download/:assetId', requireAuth, requirePermission('canAccessAssets
     const showHostname = req.query.showHostname !== undefined ? req.query.showHostname === 'true' : undefined;
     const showIpAddress = req.query.showIpAddress !== undefined ? req.query.showIpAddress === 'true' : undefined;
     const qrCodeContent = req.query.qrCodeContent as 'full' | 'itemNumber' | undefined;
-    const labelType = req.query.labelType as 'brother-dk22211' | 'dymo-1933081' | undefined;
+    const labelType = req.query.labelType as 'brother-dk22211' | 'dymo-1933081' | 'dymo-labelmanager' | undefined;
 
     const asset = await prisma.asset.findUnique({
       where: { id: assetId },
@@ -469,7 +473,7 @@ router.get('/download/:assetId', requireAuth, requirePermission('canAccessAssets
     };
 
     // Select correct service based on label type
-    const isDymo = finalSettings.labelType === 'dymo-1933081';
+    const isDymo = DYMO_LABEL_TYPES.has(finalSettings.labelType);
     const createLabelPDF = isDymo ? createDymoPDF : createBrotherPDF;
 
     // Resolve first IP (all IPs are equal now)
@@ -503,6 +507,7 @@ router.get('/dymo-xml/:assetId', requireAuth, requirePermission('canAccessAssets
     const showHostname = req.query.showHostname !== undefined ? req.query.showHostname === 'true' : undefined;
     const showIpAddress = req.query.showIpAddress !== undefined ? req.query.showIpAddress === 'true' : undefined;
     const qrCodeContent = req.query.qrCodeContent as 'full' | 'itemNumber' | undefined;
+    const buildXml = req.query.variant === 'labelmanager' ? buildDymoLabelManagerXml : buildDymoLabelXml;
 
     const asset = await prisma.asset.findUnique({
       where: { id: assetId },
@@ -541,7 +546,7 @@ router.get('/dymo-xml/:assetId', requireAuth, requirePermission('canAccessAssets
     }
 
     const labelAsset: LabelAsset = { ...asset, ipAddress: primaryIP, organizationName, assignedTo };
-    const xml = await buildDymoLabelXml(labelAsset, finalSettings);
+    const xml = await buildXml(labelAsset, finalSettings);
 
     res.json({ itemNumber: asset.itemNumber, xml });
   } catch (error) {
@@ -566,6 +571,7 @@ router.get('/dymo-xml-batch', requireAuth, requirePermission('canAccessAssets'),
     const showHostname = req.query.showHostname !== undefined ? req.query.showHostname === 'true' : undefined;
     const showIpAddress = req.query.showIpAddress !== undefined ? req.query.showIpAddress === 'true' : undefined;
     const qrCodeContent = req.query.qrCodeContent as 'full' | 'itemNumber' | undefined;
+    const buildXml = req.query.variant === 'labelmanager' ? buildDymoLabelManagerXml : buildDymoLabelXml;
 
     const settingsRecords = await prisma.settings.findMany({
       where: {
@@ -602,7 +608,7 @@ router.get('/dymo-xml-batch', requireAuth, requirePermission('canAccessAssets'),
       return {
         assetId: asset.id,
         itemNumber: asset.itemNumber,
-        xml: await buildDymoLabelXml(labelAsset, finalSettings),
+        xml: await buildXml(labelAsset, finalSettings),
       };
     }));
 

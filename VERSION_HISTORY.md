@@ -4,6 +4,24 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.28.18] - 2026-09-07
+
+### Added
+
+- Added a third Label Type option, "DYMO LabelManager Executive 640 (24mm tape)", alongside the existing Brother DK-22211 and Dymo 1933081 label types in Settings, the single-asset print dialog, and the batch print dialog. Like the existing Dymo 1933081 integration, it prints client-side through DYMO Connect's local web service on the user's own machine rather than through the server. The LabelManager Executive 640 is a D1-tape device rather than a die-cut LabelWriter, so it's detected and printed through DYMO Connect Framework's separate "Tape printer" API instead of the LabelWriter API used for the 1933081. Label layout/sizing is unverified against the physical printer and expected to need tuning once tested on real hardware.
+
+### Technical Details
+
+- `apps/web/public/vendor/dymo.connect.framework.js`: confirmed (no changes) the vendored DYMO Connect Framework SDK already exposes `getTapePrintersAsync()` / `createTapePrintParamsXml()` for D1-tape ("Tape") printers, separate from `getLabelWriterPrintersAsync()` / `createLabelWriterPrintParamsXml()` used for die-cut LabelWriter printers.
+- `apps/web/src/lib/dymoLabelPrinter.ts`: added `listDymoTapePrinters()` and `printDymoTapeLabel()` (auto-cut, no Twin Turbo roll concept) alongside the existing LabelWriter functions, plus a separate `dymo.lastTapePrinterName` localStorage key so LabelWriter/LabelManager printer selections don't clobber each other on a shared device.
+- `apps/web/src/hooks/useDymoPrinting.ts`: added a `family: 'labelwriter' | 'tape'` parameter that switches which printer-listing/last-selected functions are used.
+- `apps/api/src/services/labelService-dymo.ts`: extracted the Dymo 1933081 XML template into a shared `buildAddressStyleLabelXml()` parameterized by label width/height in twips, so the same QR+text layout scales per-axis to a new label size instead of being duplicated. Added `buildDymoLabelManagerXml()` (24mm tape, 2in print length) alongside the existing `buildDymoLabelXml()` (unchanged 1933081 output, scale factor 1:1).
+- `apps/api/src/routes/labels.ts`: `/dymo-xml/:assetId` and `/dymo-xml-batch` now accept a `variant=labelmanager` query param to select `buildDymoLabelManagerXml` over `buildDymoLabelXml`; `/label-types` lists the new type; the Brother-vs-Dymo branches in the preview/print/download routes now check membership in a `DYMO_LABEL_TYPES` set instead of an exact `'dymo-1933081'` match.
+- `apps/api/src/services/labelService.ts`, `apps/web/src/lib/api.ts`: extended the `LabelSettings.labelType` union with `'dymo-labelmanager'`.
+- `apps/web/src/components/LabelPreviewModal.tsx`, `BatchPrintModal.tsx`, `apps/web/src/pages/settings/GeneralTab.tsx`: added the new dropdown option and switched the DYMO branch to also match `'dymo-labelmanager'`, picking the tape print path/hook family when it's selected.
+
+---
+
 ## [1.28.17] - 2026-09-04
 
 ### Changed

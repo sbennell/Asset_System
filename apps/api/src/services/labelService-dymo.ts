@@ -116,13 +116,35 @@ function escapeXml(str: string): string {
   }[c] || c));
 }
 
+interface AddressLabelLayout {
+  paperName: string;
+  widthTwips: number;
+  heightTwips: number;
+}
+
+// Base layout below is authored for the Dymo 1933081 canvas (5040x1440 twips, i.e.
+// 1"x3.5" at 1440 twips/inch) and scaled per-axis for other label sizes (e.g. the
+// LabelManager Executive 640's 24mm tape), so both labels share one template.
+const BASE_WIDTH_TWIPS = 5040;
+const BASE_HEIGHT_TWIPS = 1440;
+
 /**
- * Build a native DYMO DieCutLabel XML for the Dymo 1933081 (1"x3.5" address-style)
- * label, printed directly through DYMO Label Software's local web service from the
- * browser. Coordinates are in twips (1440 per inch); label is 5040x1440 twips.
+ * Build a native DYMO DieCutLabel XML, printed directly through DYMO Label
+ * Software's local web service from the browser. Coordinates are in twips (1440
+ * per inch). Shared by the Dymo 1933081 (LabelWriter) and LabelManager Executive
+ * 640 (tape) label builders below, scaled to each device's label dimensions.
  */
-export async function buildDymoLabelXml(asset: LabelAsset, settings: Partial<LabelSettings> = {}): Promise<string> {
+async function buildAddressStyleLabelXml(
+  asset: LabelAsset,
+  settings: Partial<LabelSettings>,
+  layout: AddressLabelLayout
+): Promise<string> {
   const opts = { ...DEFAULT_SETTINGS, ...settings };
+  const sx = layout.widthTwips / BASE_WIDTH_TWIPS;
+  const sy = layout.heightTwips / BASE_HEIGHT_TWIPS;
+  const scX = (n: number) => Math.round(n * sx);
+  const scY = (n: number) => Math.round(n * sy);
+  const scFont = (n: number) => Math.max(4, Math.round(n * sy));
   const qrContent = buildQRContent(asset, opts);
   // DYMO's native BarcodeObject doesn't reliably honor Bounds for QR sizing (its
   // internal "Size: Large" auto-sizing clips/shrinks unpredictably regardless of the
@@ -171,9 +193,9 @@ export async function buildDymoLabelXml(asset: LabelAsset, settings: Partial<Lab
 <DieCutLabel Version="8.0" Units="twips">
   <PaperOrientation>Landscape</PaperOrientation>
   <Id>Address</Id>
-  <PaperName>30252 Address</PaperName>
+  <PaperName>${layout.paperName}</PaperName>
   <DrawCommands>
-    <RoundRectangle X="0" Y="0" Width="5040" Height="1440" Rx="270" Ry="270" />
+    <RoundRectangle X="0" Y="0" Width="${layout.widthTwips}" Height="${layout.heightTwips}" Rx="${scY(270)}" Ry="${scY(270)}" />
   </DrawCommands>
 
   <ObjectInfo>
@@ -192,7 +214,7 @@ export async function buildDymoLabelXml(asset: LabelAsset, settings: Partial<Lab
       <HorizontalAlignment>Center</HorizontalAlignment>
       <VerticalAlignment>Center</VerticalAlignment>
     </ImageObject>
-    <Bounds X="370" Y="214" Width="1134" Height="1134" />
+    <Bounds X="${scX(370)}" Y="${scY(214)}" Width="${scX(1134)}" Height="${scY(1134)}" />
   </ObjectInfo>
 
   ${assignedText ? `<ObjectInfo>
@@ -213,13 +235,13 @@ export async function buildDymoLabelXml(asset: LabelAsset, settings: Partial<Lab
         <Element>
           <String>${assignedText}</String>
           <Attributes>
-            <Font Family="Arial" Size="14" Bold="True" Italic="False" Underline="False" Strikeout="False" />
+            <Font Family="Arial" Size="${scFont(14)}" Bold="True" Italic="False" Underline="False" Strikeout="False" />
             <ForeColor Alpha="255" Red="0" Green="0" Blue="0" />
           </Attributes>
         </Element>
       </StyledText>
     </TextObject>
-    <Bounds X="1520" Y="130" Width="3420" Height="250" />
+    <Bounds X="${scX(1520)}" Y="${scY(130)}" Width="${scX(3420)}" Height="${scY(250)}" />
   </ObjectInfo>` : ''}
 
   <ObjectInfo>
@@ -240,13 +262,13 @@ export async function buildDymoLabelXml(asset: LabelAsset, settings: Partial<Lab
         <Element>
           <String>${itemText}</String>
           <Attributes>
-            <Font Family="Arial" Size="${itemModelSerialSize}" Bold="True" Italic="False" Underline="False" Strikeout="False" />
+            <Font Family="Arial" Size="${scFont(itemModelSerialSize)}" Bold="True" Italic="False" Underline="False" Strikeout="False" />
             <ForeColor Alpha="255" Red="0" Green="0" Blue="0" />
           </Attributes>
         </Element>
       </StyledText>
     </TextObject>
-    <Bounds X="1520" Y="${itemY}" Width="3420" Height="${itemModelSerialHeight}" />
+    <Bounds X="${scX(1520)}" Y="${scY(itemY)}" Width="${scX(3420)}" Height="${scY(itemModelSerialHeight)}" />
   </ObjectInfo>
 
   ${modelText ? `<ObjectInfo>
@@ -267,13 +289,13 @@ export async function buildDymoLabelXml(asset: LabelAsset, settings: Partial<Lab
         <Element>
           <String>${modelText}</String>
           <Attributes>
-            <Font Family="Arial" Size="${itemModelSerialSize}" Bold="False" Italic="False" Underline="False" Strikeout="False" />
+            <Font Family="Arial" Size="${scFont(itemModelSerialSize)}" Bold="False" Italic="False" Underline="False" Strikeout="False" />
             <ForeColor Alpha="255" Red="0" Green="0" Blue="0" />
           </Attributes>
         </Element>
       </StyledText>
     </TextObject>
-    <Bounds X="1520" Y="${modelY}" Width="3420" Height="${itemModelSerialHeight}" />
+    <Bounds X="${scX(1520)}" Y="${scY(modelY)}" Width="${scX(3420)}" Height="${scY(itemModelSerialHeight)}" />
   </ObjectInfo>` : ''}
 
   ${serialText ? `<ObjectInfo>
@@ -294,13 +316,13 @@ export async function buildDymoLabelXml(asset: LabelAsset, settings: Partial<Lab
         <Element>
           <String>${serialText}</String>
           <Attributes>
-            <Font Family="Arial" Size="${itemModelSerialSize}" Bold="False" Italic="False" Underline="False" Strikeout="False" />
+            <Font Family="Arial" Size="${scFont(itemModelSerialSize)}" Bold="False" Italic="False" Underline="False" Strikeout="False" />
             <ForeColor Alpha="255" Red="0" Green="0" Blue="0" />
           </Attributes>
         </Element>
       </StyledText>
     </TextObject>
-    <Bounds X="1520" Y="${serialY}" Width="3420" Height="${itemModelSerialHeight}" />
+    <Bounds X="${scX(1520)}" Y="${scY(serialY)}" Width="${scX(3420)}" Height="${scY(itemModelSerialHeight)}" />
   </ObjectInfo>` : ''}
 
   ${hostIpText ? `<ObjectInfo>
@@ -321,13 +343,13 @@ export async function buildDymoLabelXml(asset: LabelAsset, settings: Partial<Lab
         <Element>
           <String>${hostIpText}</String>
           <Attributes>
-            <Font Family="Arial" Size="${hostIpSize}" Bold="False" Italic="False" Underline="False" Strikeout="False" />
+            <Font Family="Arial" Size="${scFont(hostIpSize)}" Bold="False" Italic="False" Underline="False" Strikeout="False" />
             <ForeColor Alpha="255" Red="0" Green="0" Blue="0" />
           </Attributes>
         </Element>
       </StyledText>
     </TextObject>
-    <Bounds X="1520" Y="${hostIpY}" Width="3420" Height="${hostIpHeight}" />
+    <Bounds X="${scX(1520)}" Y="${scY(hostIpY)}" Width="${scX(3420)}" Height="${scY(hostIpHeight)}" />
   </ObjectInfo>` : ''}
 
   ${orgText ? `<ObjectInfo>
@@ -348,16 +370,48 @@ export async function buildDymoLabelXml(asset: LabelAsset, settings: Partial<Lab
         <Element>
           <String>${orgText}</String>
           <Attributes>
-            <Font Family="Arial" Size="14" Bold="True" Italic="False" Underline="False" Strikeout="False" />
+            <Font Family="Arial" Size="${scFont(14)}" Bold="True" Italic="False" Underline="False" Strikeout="False" />
             <ForeColor Alpha="255" Red="0" Green="0" Blue="0" />
           </Attributes>
         </Element>
       </StyledText>
     </TextObject>
-    <Bounds X="1520" Y="1247" Width="3420" Height="250" />
+    <Bounds X="${scX(1520)}" Y="${scY(1247)}" Width="${scX(3420)}" Height="${scY(250)}" />
   </ObjectInfo>` : ''}
 
 </DieCutLabel>`;
+}
+
+/**
+ * Build a native DYMO DieCutLabel XML for the Dymo 1933081 (1"x3.5" address-style)
+ * label, printed directly through DYMO Label Software's local web service from the
+ * browser. Coordinates are in twips (1440 per inch); label is 5040x1440 twips.
+ */
+export async function buildDymoLabelXml(asset: LabelAsset, settings: Partial<LabelSettings> = {}): Promise<string> {
+  return buildAddressStyleLabelXml(asset, settings, {
+    paperName: '30252 Address',
+    widthTwips: BASE_WIDTH_TWIPS,
+    heightTwips: BASE_HEIGHT_TWIPS,
+  });
+}
+
+// LabelManager Executive 640 uses 24mm D1 tape (~1360 twips) and prints a shorter,
+// narrower label than the 1933081 address label - width/layout is unverified against
+// real hardware and expected to need tuning once tested on the printer.
+const LABELMANAGER_WIDTH_TWIPS = 2880; // 2in print length (auto-cut)
+const LABELMANAGER_HEIGHT_TWIPS = 1360; // 24mm tape
+
+/**
+ * Build a native DYMO label XML for the LabelManager Executive 640 (24mm tape),
+ * printed via DYMO Connect's Tape printer API (see dymoLabelPrinter.ts). Same
+ * layout as the 1933081 address label, scaled down to fit the narrower tape.
+ */
+export async function buildDymoLabelManagerXml(asset: LabelAsset, settings: Partial<LabelSettings> = {}): Promise<string> {
+  return buildAddressStyleLabelXml(asset, settings, {
+    paperName: 'LabelManager 24mm Tape',
+    widthTwips: LABELMANAGER_WIDTH_TWIPS,
+    heightTwips: LABELMANAGER_HEIGHT_TWIPS,
+  });
 }
 
 /**

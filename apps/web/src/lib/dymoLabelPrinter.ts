@@ -22,10 +22,20 @@ interface DymoCheckEnvironmentResult {
   isWebServicePresent: boolean;
 }
 
+interface DymoTapePrinterInfo {
+  name: string;
+  printerType: string;
+  isAutoCutSupported: boolean;
+}
+
 interface DymoFramework {
   checkEnvironment(onSuccess: (result: DymoCheckEnvironmentResult) => void, onError?: (error: unknown) => void): void;
   getLabelWriterPrintersAsync(): Promise<DymoPrinterInfo[]>;
   createLabelWriterPrintParamsXml(params: { copies?: number; flowDirection?: string; twinTurboRoll?: TwinTurboRoll }): string;
+  // LabelManager Executive 640 and other D1-tape devices are exposed as "Tape" printers
+  // by DYMO Connect Framework, separate from the die-cut "LabelWriter" printer family.
+  getTapePrintersAsync(): Promise<DymoTapePrinterInfo[]>;
+  createTapePrintParamsXml(params: { copies?: number; cutMode?: 'Auto' | 'None' }): string;
   printLabelAsync(printerName: string, printParamsXml: string, labelXml: string, labelSetXml: string): Promise<void>;
 }
 
@@ -38,6 +48,7 @@ declare global {
 const SDK_URL = '/vendor/dymo.connect.framework.js';
 const LAST_PRINTER_KEY = 'dymo.lastPrinterName';
 const LAST_ROLL_KEY = 'dymo.lastRoll';
+const LAST_TAPE_PRINTER_KEY = 'dymo.lastTapePrinterName';
 
 let sdkLoadPromise: Promise<void> | null = null;
 
@@ -110,6 +121,14 @@ export async function listDymoPrinters(): Promise<DymoPrinterSummary[]> {
   return printers.map((p) => ({ name: p.name, isTwinTurbo: p.isTwinTurbo }));
 }
 
+/** Lists Tape printers (e.g. the LabelManager Executive 640), separate from LabelWriters. */
+export async function listDymoTapePrinters(): Promise<DymoPrinterSummary[]> {
+  const framework = window.dymo?.label?.framework;
+  if (!framework) return [];
+  const printers = await framework.getTapePrintersAsync();
+  return printers.map((p) => ({ name: p.name, isTwinTurbo: false }));
+}
+
 /**
  * @param twinTurboRoll Which roll to use on a LabelWriter 450 Twin Turbo (or similar
  * dual-roll printer). Ignored for single-roll printers.
@@ -132,6 +151,16 @@ export async function printDymoLabel(
   await framework.printLabelAsync(printerName, printParamsXml, xml, '');
 }
 
+/** Prints to a Tape printer (e.g. the LabelManager Executive 640), auto-cutting each copy. */
+export async function printDymoTapeLabel(xml: string, printerName: string, copies = 1): Promise<void> {
+  const framework = window.dymo?.label?.framework;
+  if (!framework) {
+    throw new Error('DYMO SDK is not loaded');
+  }
+  const printParamsXml = framework.createTapePrintParamsXml({ copies, cutMode: 'Auto' });
+  await framework.printLabelAsync(printerName, printParamsXml, xml, '');
+}
+
 export function getLastDymoPrinter(): string {
   return localStorage.getItem(LAST_PRINTER_KEY) || '';
 }
@@ -147,4 +176,12 @@ export function getLastDymoRoll(): TwinTurboRoll {
 
 export function setLastDymoRoll(roll: TwinTurboRoll): void {
   localStorage.setItem(LAST_ROLL_KEY, roll);
+}
+
+export function getLastDymoTapePrinter(): string {
+  return localStorage.getItem(LAST_TAPE_PRINTER_KEY) || '';
+}
+
+export function setLastDymoTapePrinter(printerName: string): void {
+  localStorage.setItem(LAST_TAPE_PRINTER_KEY, printerName);
 }

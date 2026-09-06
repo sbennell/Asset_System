@@ -119,7 +119,7 @@ function LabelSettingsSection() {
     mutation.mutate({ qrCodeContent: value });
   };
 
-  const handleLabelTypeChange = (labelType: 'brother-dk22211' | 'dymo-1933081') => {
+  const handleLabelTypeChange = (labelType: 'brother-dk22211' | 'dymo-1933081' | 'dymo-labelmanager') => {
     mutation.mutate({ labelType });
   };
 
@@ -148,7 +148,7 @@ function LabelSettingsSection() {
           {/* Printer Selection - only applies to Brother, which prints via the server.
               DYMO prints directly from each user's browser, so the printer is picked
               per-device in the print dialog instead of here. */}
-          {settings?.labelType === 'dymo-1933081' ? (
+          {(settings?.labelType === 'dymo-1933081' || settings?.labelType === 'dymo-labelmanager') ? (
             <div>
               <label className="label">Printer</label>
               <p className="text-xs text-gray-500">
@@ -183,12 +183,13 @@ function LabelSettingsSection() {
             <label className="label">Label Size</label>
             <select
               value={settings?.labelType || 'brother-dk22211'}
-              onChange={(e) => handleLabelTypeChange(e.target.value as 'brother-dk22211' | 'dymo-1933081')}
+              onChange={(e) => handleLabelTypeChange(e.target.value as 'brother-dk22211' | 'dymo-1933081' | 'dymo-labelmanager')}
               className="input"
               disabled={mutation.isPending}
             >
               <option value="brother-dk22211">Brother DK-22211 (29×62mm)</option>
               <option value="dymo-1933081">Dymo 1933081 (25×89mm)</option>
+              <option value="dymo-labelmanager">DYMO LabelManager Executive 640 (24mm tape)</option>
             </select>
           </div>
 
