@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.28.22] - 2026-09-07
+
+### Changed
+
+- DYMO LabelManager Executive 640 label: text is now left-aligned instead of centered.
+
+### Technical Details
+
+- `apps/api/src/services/labelService-dymo.ts`: `buildDymoLabelManagerXml()`'s "Details" `TextObject`/`FormattedText` `HorizontalAlignment` changed from `Center` to `Left`.
+
+---
+
 ## [1.28.21] - 2026-09-07
 
 ### Changed

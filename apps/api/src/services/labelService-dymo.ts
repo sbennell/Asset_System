@@ -521,13 +521,13 @@ export async function buildDymoLabelManagerXml(asset: LabelAsset, settings: Part
           <IsOutlined>False</IsOutlined>
           <BorderStyle>SolidLine</BorderStyle>
           <Margin><DYMOThickness Left="0" Top="0" Right="0" Bottom="0" /></Margin>
-          <HorizontalAlignment>Center</HorizontalAlignment>
+          <HorizontalAlignment>Left</HorizontalAlignment>
           <VerticalAlignment>Middle</VerticalAlignment>
           <FitMode>AlwaysFit</FitMode>
           <IsVertical>False</IsVertical>
           <FormattedText>
             <FitMode>AlwaysFit</FitMode>
-            <HorizontalAlignment>Center</HorizontalAlignment>
+            <HorizontalAlignment>Left</HorizontalAlignment>
             <VerticalAlignment>Middle</VerticalAlignment>
             <IsVertical>False</IsVertical>
             ${lines.map(line => `<LineTextSpan>
