@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.28.26] - 2026-09-07
+
+### Fixed
+
+- DYMO LabelManager Executive 640 label: reverted the QR/text overlap introduced in 1.28.24/1.28.25 - it shifted the entire label (QR included) to the right instead of closing the gap, which means our fixed leader/trailer assumption doesn't hold once the declared print length changes (the printer's own tape-alignment centering likely repositions everything based on the length we declare, not just the object we moved). Back to the flush, zero-overlap layout that printed with everything correctly positioned.
+
+### Technical Details
+
+- `apps/api/src/services/labelService-dymo.ts`: `LABELMANAGER_QR_TEXT_OVERLAP_IN` set back to `0`.
+
+---
+
 ## [1.28.25] - 2026-09-07
 
 ### Changed
