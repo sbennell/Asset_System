@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.28.25] - 2026-09-07
+
+### Changed
+
+- DYMO LabelManager Executive 640 label: the previous 0.15in text/QR overlap wasn't enough to close the gap (it reportedly looked wider) - increased the overlap to 0.3in. Tuning this value blind against a printer we don't have on hand; expect another round if it overshoots.
+
+### Technical Details
+
+- `apps/api/src/services/labelService-dymo.ts`: `LABELMANAGER_QR_TEXT_OVERLAP_IN` raised from `0.15` to `0.3`.
+
+---
+
 ## [1.28.24] - 2026-09-07
 
 ### Changed

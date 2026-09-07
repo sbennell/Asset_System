@@ -424,7 +424,7 @@ const LABELMANAGER_TOP_MARGIN_IN = 0.116666645; // vertical inset baked into the
 const LABELMANAGER_CONTENT_HEIGHT_IN = 0.71111107; // usable print height for 24mm tape
 const LABELMANAGER_QR_SIZE_IN = LABELMANAGER_CONTENT_HEIGHT_IN;
 const LABELMANAGER_TEXT_WIDTH_IN = 1.8; // chosen to fit the text lines below; tune once tested
-const LABELMANAGER_QR_TEXT_OVERLAP_IN = 0.15; // closes the QR's own quiet-zone whitespace
+const LABELMANAGER_QR_TEXT_OVERLAP_IN = 0.3; // closes the QR's own quiet-zone whitespace
 
 function dymoBlackBrush(): string {
   return '<SolidColorBrush><Color A="1" R="0" G="0" B="0"></Color></SolidColorBrush>';
