@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.28.27] - 2026-09-07
+
+### Changed
+
+- Renamed the "DYMO LabelManager Executive 640 (24mm tape)" Label Size option to "Dymo 24mm Tape" in Settings and the print dialogs.
+
+### Technical Details
+
+- `apps/api/src/routes/labels.ts` (`/label-types`), `apps/web/src/pages/settings/GeneralTab.tsx`, `apps/web/src/components/LabelPreviewModal.tsx`, `apps/web/src/components/BatchPrintModal.tsx`: updated the `dymo-labelmanager` display label.
+
+---
+
 ## [1.28.26] - 2026-09-07
 
 ### Fixed

@@ -382,7 +382,7 @@ router.get('/label-types', requireAuth, requirePermission('canAccessAssets'), as
     res.json([
       { id: 'brother-dk22211', name: 'Brother DK-22211 (29×62mm)' },
       { id: 'dymo-1933081', name: 'Dymo 1933081 (25×89mm)' },
-      { id: 'dymo-labelmanager', name: 'DYMO LabelManager Executive 640 (24mm tape)' },
+      { id: 'dymo-labelmanager', name: 'Dymo 24mm Tape' },
     ]);
   } catch (error) {
     console.error('Get label types error:', error);

@@ -129,7 +129,7 @@ export default function BatchPrintModal({ assetIds, onClose, onSuccess }: BatchP
             >
               <option value="brother-dk22211">Brother DK-22211 (29×62mm)</option>
               <option value="dymo-1933081">Dymo 1933081 (25×89mm)</option>
-              <option value="dymo-labelmanager">DYMO LabelManager Executive 640 (24mm tape)</option>
+              <option value="dymo-labelmanager">Dymo 24mm Tape</option>
             </select>
           </div>
 
