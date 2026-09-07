@@ -424,6 +424,7 @@ const LABELMANAGER_TOP_MARGIN_IN = 0.116666645; // vertical inset baked into the
 const LABELMANAGER_CONTENT_HEIGHT_IN = 0.71111107; // usable print height for 24mm tape
 const LABELMANAGER_QR_SIZE_IN = LABELMANAGER_CONTENT_HEIGHT_IN;
 const LABELMANAGER_TEXT_WIDTH_IN = 1.8; // chosen to fit the text lines below; tune once tested
+const LABELMANAGER_QR_TEXT_OVERLAP_IN = 0.15; // closes the QR's own quiet-zone whitespace
 
 function dymoBlackBrush(): string {
   return '<SolidColorBrush><Color A="1" R="0" G="0" B="0"></Color></SolidColorBrush>';
@@ -447,9 +448,12 @@ export async function buildDymoLabelManagerXml(asset: LabelAsset, settings: Part
   if (hostIpText) lines.push({ text: hostIpText, size: 7, bold: false });
   if (orgText) lines.push({ text: orgText, size: 10, bold: false });
 
-  const contentWidth = LABELMANAGER_QR_SIZE_IN + LABELMANAGER_TEXT_WIDTH_IN;
+  // The QR box's own quiet-zone (the blank margin the renderer leaves around the QR
+  // pattern for scannability) reads as visible whitespace between the two objects even
+  // though their boxes are flush - pull the text box left into that margin to close it.
+  const contentWidth = LABELMANAGER_QR_SIZE_IN + LABELMANAGER_TEXT_WIDTH_IN - LABELMANAGER_QR_TEXT_OVERLAP_IN;
   const initialLength = LABELMANAGER_LEADER_IN * 2 + contentWidth;
-  const textX = LABELMANAGER_LEADER_IN + LABELMANAGER_QR_SIZE_IN;
+  const textX = LABELMANAGER_LEADER_IN + LABELMANAGER_QR_SIZE_IN - LABELMANAGER_QR_TEXT_OVERLAP_IN;
 
   return `<?xml version="1.0" encoding="utf-8"?>
 <DesktopLabel Version="1">

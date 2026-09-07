@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.28.24] - 2026-09-07
+
+### Changed
+
+- DYMO LabelManager Executive 640 label: closed the visible gap between the QR code and the text. The QR and text boxes were already flush in our layout with zero gap between them - the visible whitespace was the QR renderer's own quiet-zone margin inside its box - so the text box now overlaps 0.15in into that margin, and the label's overall content width/print length shrank to match.
+
+### Technical Details
+
+- `apps/api/src/services/labelService-dymo.ts`: added `LABELMANAGER_QR_TEXT_OVERLAP_IN = 0.15`; `buildDymoLabelManagerXml()`'s `textX` and `contentWidth` both subtract it.
+
+---
+
 ## [1.28.23] - 2026-09-07
 
 ### Changed
