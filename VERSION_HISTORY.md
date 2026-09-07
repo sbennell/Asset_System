@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.28.30] - 2026-09-07
+
+### Changed
+
+- DYMO 24mm Tape label: text font sizes reduced by 1pt (Assigned To/Org 10→9, Item/Model/Serial 8→7) to try a slightly smaller fit.
+
+### Technical Details
+
+- `apps/api/src/services/labelService-dymo.ts`: `buildDymoLabelManagerXml()`'s `lines` array font sizes lowered by 1.
+
+---
+
 ## [1.28.29] - 2026-09-07
 
 ### Changed
