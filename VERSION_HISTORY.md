@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.28.29] - 2026-09-07
+
+### Changed
+
+- DYMO 24mm Tape label: text lines are bold again, trying it out after 1.28.21 removed bold.
+
+### Technical Details
+
+- `apps/api/src/services/labelService-dymo.ts`: `buildDymoLabelManagerXml()`'s `lines` array sets `bold: true` for every field again.
+
+---
+
 ## [1.28.28] - 2026-09-07
 
 ### Changed

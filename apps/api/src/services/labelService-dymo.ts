@@ -443,11 +443,11 @@ export async function buildDymoLabelManagerXml(asset: LabelAsset, settings: Part
   const { qrContent, assignedText, itemText, modelText, serialText, orgText } = deriveLabelFields(asset, opts);
 
   const lines: { text: string; size: number; bold: boolean }[] = [];
-  if (assignedText) lines.push({ text: assignedText, size: 10, bold: false });
-  lines.push({ text: itemText, size: 8, bold: false });
-  if (modelText) lines.push({ text: modelText, size: 8, bold: false });
-  if (serialText) lines.push({ text: serialText, size: 8, bold: false });
-  if (orgText) lines.push({ text: orgText, size: 10, bold: false });
+  if (assignedText) lines.push({ text: assignedText, size: 10, bold: true });
+  lines.push({ text: itemText, size: 8, bold: true });
+  if (modelText) lines.push({ text: modelText, size: 8, bold: true });
+  if (serialText) lines.push({ text: serialText, size: 8, bold: true });
+  if (orgText) lines.push({ text: orgText, size: 10, bold: true });
 
   // The QR box's own quiet-zone (the blank margin the renderer leaves around the QR
   // pattern for scannability) reads as visible whitespace between the two objects even
