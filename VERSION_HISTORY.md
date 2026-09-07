@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.28.31] - 2026-09-07
+
+### Changed
+
+- DYMO 24mm Tape label: all text lines now use a single uniform font size (8pt) instead of varying by field.
+
+### Technical Details
+
+- `apps/api/src/services/labelService-dymo.ts`: `buildDymoLabelManagerXml()`'s `lines` array sets `size: 8` for every field.
+
+---
+
 ## [1.28.30] - 2026-09-07
 
 ### Changed
