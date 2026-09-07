@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.28.32] - 2026-09-07
+
+### Changed
+
+- DYMO 24mm Tape label matched exactly to a label manually tuned and exported from DYMO Connect Desktop: QR code density set to `AutoFit` (was `Large`), text font size 8.5pt (was 8pt), and a small left inset (0.03937008in, ~1mm) added to the text box so text doesn't sit flush against its edge.
+
+### Technical Details
+
+- `apps/api/src/services/labelService-dymo.ts`: `buildDymoLabelManagerXml()` - `QRCodeObject` `Size` changed to `AutoFit`; text `Margin` `Left` changed to `0.03937008`; all line font sizes changed to `8.5`; added `LABELMANAGER_TEXT_OBJECT_WIDTH_IN = 1.7828838` for the `TextObject`'s own render width (kept separate from `LABELMANAGER_TEXT_WIDTH_IN`, which still drives the reserved box/`DYMORect`/`InitialLength`), matching the reference export.
+
+---
+
 ## [1.28.31] - 2026-09-07
 
 ### Changed

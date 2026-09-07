@@ -423,7 +423,8 @@ const LABELMANAGER_LEADER_IN = 0.41666666; // 10mm leader/trailer (DYMO's "Cente
 const LABELMANAGER_TOP_MARGIN_IN = 0.116666645; // vertical inset baked into the 24mm tape preset
 const LABELMANAGER_CONTENT_HEIGHT_IN = 0.71111107; // usable print height for 24mm tape
 const LABELMANAGER_QR_SIZE_IN = LABELMANAGER_CONTENT_HEIGHT_IN;
-const LABELMANAGER_TEXT_WIDTH_IN = 1.8; // chosen to fit the text lines below; tune once tested
+const LABELMANAGER_TEXT_WIDTH_IN = 1.8; // reserved box width; drives DYMORect/InitialLength
+const LABELMANAGER_TEXT_OBJECT_WIDTH_IN = 1.7828838; // the TextObject's own render width, matching a label exported after manual tuning in DYMO Connect Desktop
 const LABELMANAGER_QR_TEXT_OVERLAP_IN = 0; // see note below - overlapping shifted the whole label
 
 function dymoBlackBrush(): string {
@@ -443,11 +444,11 @@ export async function buildDymoLabelManagerXml(asset: LabelAsset, settings: Part
   const { qrContent, assignedText, itemText, modelText, serialText, orgText } = deriveLabelFields(asset, opts);
 
   const lines: { text: string; size: number; bold: boolean }[] = [];
-  if (assignedText) lines.push({ text: assignedText, size: 8, bold: true });
-  lines.push({ text: itemText, size: 8, bold: true });
-  if (modelText) lines.push({ text: modelText, size: 8, bold: true });
-  if (serialText) lines.push({ text: serialText, size: 8, bold: true });
-  if (orgText) lines.push({ text: orgText, size: 8, bold: true });
+  if (assignedText) lines.push({ text: assignedText, size: 8.5, bold: true });
+  lines.push({ text: itemText, size: 8.5, bold: true });
+  if (modelText) lines.push({ text: modelText, size: 8.5, bold: true });
+  if (serialText) lines.push({ text: serialText, size: 8.5, bold: true });
+  if (orgText) lines.push({ text: orgText, size: 8.5, bold: true });
 
   // The QR box's own quiet-zone (the blank margin the renderer leaves around the QR
   // pattern for scannability) reads as visible whitespace between the two objects even
@@ -499,7 +500,7 @@ export async function buildDymoLabelManagerXml(asset: LabelAsset, settings: Part
           <Data><DataString>${escapeXml(qrContent)}</DataString></Data>
           <HorizontalAlignment>Center</HorizontalAlignment>
           <VerticalAlignment>Middle</VerticalAlignment>
-          <Size>Large</Size>
+          <Size>AutoFit</Size>
           <EQRCodeType>QRCodeText</EQRCodeType>
           <TextDataHolder><Value>${escapeXml(qrContent)}</Value></TextDataHolder>
           <ObjectLayout>
@@ -525,7 +526,7 @@ export async function buildDymoLabelManagerXml(asset: LabelAsset, settings: Part
           <OutlineThickness>1</OutlineThickness>
           <IsOutlined>False</IsOutlined>
           <BorderStyle>SolidLine</BorderStyle>
-          <Margin><DYMOThickness Left="0" Top="0" Right="0" Bottom="0" /></Margin>
+          <Margin><DYMOThickness Left="0.03937008" Top="0" Right="0" Bottom="0" /></Margin>
           <HorizontalAlignment>Left</HorizontalAlignment>
           <VerticalAlignment>Middle</VerticalAlignment>
           <FitMode>AlwaysFit</FitMode>
@@ -555,7 +556,7 @@ export async function buildDymoLabelManagerXml(asset: LabelAsset, settings: Part
               <Y>${LABELMANAGER_TOP_MARGIN_IN}</Y>
             </DYMOPoint>
             <Size>
-              <Width>${LABELMANAGER_TEXT_WIDTH_IN}</Width>
+              <Width>${LABELMANAGER_TEXT_OBJECT_WIDTH_IN}</Width>
               <Height>${LABELMANAGER_CONTENT_HEIGHT_IN}</Height>
             </Size>
           </ObjectLayout>
