@@ -4,6 +4,20 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.28.28] - 2026-09-07
+
+### Changed
+
+- Removed the "Show Hostname" and "Show IP Address" options for the Dymo 24mm Tape label type - the tape is too narrow for that content. This applies in Settings and both print dialogs, and the LabelManager XML now always omits hostname/IP regardless of the stored setting (previously the fields were hidden by whatever the setting happened to be, not guaranteed off).
+
+### Technical Details
+
+- `apps/api/src/services/labelService-dymo.ts`: `buildDymoLabelManagerXml()` no longer includes `hostIpText` in its rendered lines at all.
+- `apps/web/src/components/LabelPreviewModal.tsx`, `BatchPrintModal.tsx`: hide the Show Hostname/Show IP Address checkboxes when `dymo-labelmanager` is selected.
+- `apps/web/src/pages/settings/GeneralTab.tsx`: same, keyed off the saved `labelType` setting.
+
+---
+
 ## [1.28.27] - 2026-09-07
 
 ### Changed

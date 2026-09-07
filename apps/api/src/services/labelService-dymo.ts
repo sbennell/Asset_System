@@ -438,14 +438,15 @@ function dymoBlackBrush(): string {
  */
 export async function buildDymoLabelManagerXml(asset: LabelAsset, settings: Partial<LabelSettings> = {}): Promise<string> {
   const opts = { ...DEFAULT_SETTINGS, ...settings };
-  const { qrContent, assignedText, itemText, modelText, serialText, hostIpText, orgText } = deriveLabelFields(asset, opts);
+  // Hostname/IP isn't offered for this tape - too little width for it - so it's
+  // omitted here regardless of the showHostname/showIpAddress settings.
+  const { qrContent, assignedText, itemText, modelText, serialText, orgText } = deriveLabelFields(asset, opts);
 
   const lines: { text: string; size: number; bold: boolean }[] = [];
   if (assignedText) lines.push({ text: assignedText, size: 10, bold: false });
   lines.push({ text: itemText, size: 8, bold: false });
   if (modelText) lines.push({ text: modelText, size: 8, bold: false });
   if (serialText) lines.push({ text: serialText, size: 8, bold: false });
-  if (hostIpText) lines.push({ text: hostIpText, size: 7, bold: false });
   if (orgText) lines.push({ text: orgText, size: 10, bold: false });
 
   // The QR box's own quiet-zone (the blank margin the renderer leaves around the QR

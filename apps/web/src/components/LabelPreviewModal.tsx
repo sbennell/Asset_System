@@ -204,24 +204,28 @@ export default function LabelPreviewModal({ asset, onClose }: LabelPreviewModalP
               />
               <span className="text-sm text-gray-700">Show Assigned To</span>
             </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={labelOptions.showHostname ?? true}
-                onChange={() => toggleOption('showHostname')}
-                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-              />
-              <span className="text-sm text-gray-700">Show Hostname</span>
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={labelOptions.showIpAddress ?? true}
-                onChange={() => toggleOption('showIpAddress')}
-                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-              />
-              <span className="text-sm text-gray-700">Show IP Address</span>
-            </label>
+            {!isLabelManager && (
+              <>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={labelOptions.showHostname ?? true}
+                    onChange={() => toggleOption('showHostname')}
+                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  <span className="text-sm text-gray-700">Show Hostname</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={labelOptions.showIpAddress ?? true}
+                    onChange={() => toggleOption('showIpAddress')}
+                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  <span className="text-sm text-gray-700">Show IP Address</span>
+                </label>
+              </>
+            )}
           </div>
 
           {/* DYMO printer selection - detected on this device */}
