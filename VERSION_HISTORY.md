@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.30.7] - 2026-09-10
+
+### Changed
+
+- Brother DK-22211 (Bordered) label: QR code moved back to the right by 1.5mm, removing the horizontal nudge entirely (net 0mm) - the QR was getting clipped off the label's left edge at the previously requested 3mm left offset. The 3mm upward nudge is unchanged.
+
+### Technical Details
+
+- `apps/api/src/services/labelService.ts`: `createLabelPDF()` - `qrX` reverted to plain `margin` (no bordered-variant offset); `qrY` unchanged at `3 * MM_TO_PT`.
+
+---
+
 ## [1.30.6] - 2026-09-10
 
 ### Changed
