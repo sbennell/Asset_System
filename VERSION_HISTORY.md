@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.30.6] - 2026-09-10
+
+### Changed
+
+- Brother DK-22211 (Bordered) label: QR code's upward nudge increased another 1.5mm, from 1.5mm to 3mm total (left nudge stays 1.5mm).
+
+### Technical Details
+
+- `apps/api/src/services/labelService.ts`: `createLabelPDF()` - `qrY`'s bordered-variant offset changed from `1.5 * MM_TO_PT` to `3 * MM_TO_PT`.
+
+---
+
 ## [1.30.5] - 2026-09-10
 
 ### Changed
