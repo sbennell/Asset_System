@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.29.2] - 2026-09-09
+
+### Fixed
+
+- DYMO 24mm Tape label text was printing as illegible dot patterns instead of solid characters - caused by the near-black/gray text and border color (`0.274/0.261/0.265`) introduced when matching the manually-tuned DYMO Connect export. That color renders fine on screen but dithers into a speckled pattern on the tape printer's monochrome thermal head, breaking small glyph edges apart. Reverted text, border, and QR module color to pure black, which prints as solid strokes with no dithering.
+
+### Technical Details
+
+- `apps/api/src/services/labelService-dymo.ts`: `buildDymoLabelManagerXml()` - replaced `LABELMANAGER_ACCENT_BRUSH` (0.274/0.261/0.265) and `LABELMANAGER_FILL_BRUSH` (0.13725491/0.12156863/0.1254902) with a single `LABELMANAGER_BLACK_BRUSH` (0/0/0), used everywhere both were previously used (QR fill/border/stroke, text border/stroke/font, and the top-level `BorderColor`).
+
+---
+
 ## [1.29.1] - 2026-09-09
 
 ### Changed
