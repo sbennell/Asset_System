@@ -156,10 +156,8 @@ export async function createLabelPDF(
   const qrSize = 48; // ~17mm - compact to maximize text space
 
   // QR code on LEFT, vertically centered on full label height. Bordered variant nudges
-  // the QR up by 3mm to better center it within the border (net horizontal offset
-  // settled back to 0mm after tuning - was shifted left, then back right by the same
-  // amount).
-  const qrX = margin;
+  // the QR up by 3mm and right by 0.5mm to better center it within the border.
+  const qrX = margin + (isBordered ? 0.5 * MM_TO_PT : 0);
   const qrY = (LABEL_HEIGHT_PT - qrSize) / 2 + (isBordered ? 3 * MM_TO_PT : 0);
 
   page.drawImage(qrImage, {

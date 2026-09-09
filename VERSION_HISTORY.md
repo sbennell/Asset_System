@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.30.8] - 2026-09-10
+
+### Changed
+
+- Brother DK-22211 (Bordered) label: QR code moved right by 0.5mm from center (the 3mm upward nudge is unchanged).
+
+### Technical Details
+
+- `apps/api/src/services/labelService.ts`: `createLabelPDF()` - `qrX` now `margin + 0.5 * MM_TO_PT` when bordered (was plain `margin`).
+
+---
+
 ## [1.30.7] - 2026-09-10
 
 ### Changed
