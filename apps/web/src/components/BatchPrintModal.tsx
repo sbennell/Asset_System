@@ -3,6 +3,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { X, Printer, Download, Loader2 } from 'lucide-react';
 import { api, BatchPrintResult, LabelSettings } from '../lib/api';
 import { printDymoLabel, printDymoTapeLabel, TwinTurboRoll } from '../lib/dymoLabelPrinter';
+import { getLastLabelType, setLastLabelType } from '../lib/labelPreferences';
 import { useDymoPrinting } from '../hooks/useDymoPrinting';
 
 interface BatchPrintModalProps {
@@ -13,6 +14,7 @@ interface BatchPrintModalProps {
 
 export default function BatchPrintModal({ assetIds, onClose, onSuccess }: BatchPrintModalProps) {
   const [labelOptions, setLabelOptions] = useState<Partial<LabelSettings>>({
+    labelType: getLastLabelType() ?? undefined,
     showAssignedTo: true,
     showHostname: true,
     showIpAddress: true,
@@ -24,11 +26,12 @@ export default function BatchPrintModal({ assetIds, onClose, onSuccess }: BatchP
     queryFn: api.getLabelSettings,
   });
 
-  // Sync label options with default settings when loaded
+  // Sync label options with default settings when loaded - labelType prefers the
+  // browser's remembered last-used value over the account-wide Settings default.
   useEffect(() => {
     if (defaultSettings) {
       setLabelOptions({
-        labelType: defaultSettings.labelType,
+        labelType: getLastLabelType() ?? defaultSettings.labelType,
         showAssignedTo: defaultSettings.showAssignedTo,
         showHostname: defaultSettings.showHostname,
         showIpAddress: defaultSettings.showIpAddress,
@@ -101,6 +104,7 @@ export default function BatchPrintModal({ assetIds, onClose, onSuccess }: BatchP
 
   const handleLabelTypeChange = (value: 'brother-dk22211' | 'dymo-1933081' | 'dymo-labelmanager') => {
     setLabelOptions(prev => ({ ...prev, labelType: value }));
+    setLastLabelType(value);
   };
 
   return (

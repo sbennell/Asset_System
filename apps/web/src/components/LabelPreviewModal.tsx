@@ -3,6 +3,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { X, Printer, Download, Loader2 } from 'lucide-react';
 import { api, Asset, LabelSettings } from '../lib/api';
 import { printDymoLabel, printDymoTapeLabel, TwinTurboRoll } from '../lib/dymoLabelPrinter';
+import { getLastLabelType, setLastLabelType } from '../lib/labelPreferences';
 import { useDymoPrinting } from '../hooks/useDymoPrinting';
 
 interface LabelPreviewModalProps {
@@ -21,6 +22,7 @@ const PREVIEW_PX_PER_MM = 4.3;
 
 export default function LabelPreviewModal({ asset, onClose }: LabelPreviewModalProps) {
   const [labelOptions, setLabelOptions] = useState<Partial<LabelSettings>>({
+    labelType: getLastLabelType() ?? undefined,
     showAssignedTo: true,
     showHostname: true,
     showIpAddress: true,
@@ -39,11 +41,12 @@ export default function LabelPreviewModal({ asset, onClose }: LabelPreviewModalP
     queryFn: api.getLabelSettings,
   });
 
-  // Sync label options with default settings when loaded
+  // Sync label options with default settings when loaded - labelType prefers the
+  // browser's remembered last-used value over the account-wide Settings default.
   useEffect(() => {
     if (defaultSettings) {
       setLabelOptions({
-        labelType: defaultSettings.labelType,
+        labelType: getLastLabelType() ?? defaultSettings.labelType,
         showAssignedTo: defaultSettings.showAssignedTo,
         showHostname: defaultSettings.showHostname,
         showIpAddress: defaultSettings.showIpAddress,
@@ -95,6 +98,7 @@ export default function LabelPreviewModal({ asset, onClose }: LabelPreviewModalP
 
   const handleLabelTypeChange = (value: 'brother-dk22211' | 'dymo-1933081' | 'dymo-labelmanager') => {
     setLabelOptions(prev => ({ ...prev, labelType: value }));
+    setLastLabelType(value);
   };
 
   const labelDimensionsMm = LABEL_DIMENSIONS_MM[labelOptions.labelType || 'brother-dk22211'];

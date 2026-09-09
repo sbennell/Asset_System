@@ -4,6 +4,19 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.30.0] - 2026-09-09
+
+### Added
+
+- The "Label Size" selector in both print dialogs (single-asset and batch print) now remembers the last size you picked, per browser, and uses it the next time either dialog opens - the same way DYMO printer/roll selection is already remembered. Previously it always reset to the account-wide Settings default on every open.
+
+### Technical Details
+
+- Added `apps/web/src/lib/labelPreferences.ts` with `getLastLabelType()`/`setLastLabelType()` backed by a `label.lastLabelType` `localStorage` key, mirroring the `getLastDymoPrinter`/`setLastDymoPrinter` pattern in `dymoLabelPrinter.ts`.
+- `apps/web/src/components/LabelPreviewModal.tsx` and `apps/web/src/components/BatchPrintModal.tsx`: `labelOptions` state now seeds `labelType` from `getLastLabelType()` on init; the `defaultSettings`-sync `useEffect` now sets `labelType: getLastLabelType() ?? defaultSettings.labelType` (remembered value takes precedence over the server default); `handleLabelTypeChange` now also calls `setLastLabelType(value)`.
+
+---
+
 ## [1.29.6] - 2026-09-09
 
 ### Changed
