@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.30.3] - 2026-09-10
+
+### Changed
+
+- Brother DK-22211 (Bordered) label: nudged the QR code up and left by 1mm to better center it within the border; the detail text (Item/Model/S/N/Hostname/IP) shifts left along with it to keep the same gap next to the QR.
+
+### Technical Details
+
+- `apps/api/src/services/labelService.ts`: `createLabelPDF()` - hoisted `isBordered`/`MM_TO_PT` (72/25.4) to the top of the function, reused by both the border/org-name-offset logic and the new QR offset; `qrX`/`qrY` now subtract/add `MM_TO_PT` respectively when `isBordered`; `textX` (already derived as `qrX + qrSize + 2`) shifts automatically with `qrX`. The plain `'brother-dk22211'` label is unaffected.
+
+---
+
 ## [1.30.2] - 2026-09-10
 
 ### Changed

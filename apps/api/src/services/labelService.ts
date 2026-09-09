@@ -120,6 +120,8 @@ export async function createLabelPDF(
   settings: Partial<LabelSettings> = {}
 ): Promise<Uint8Array> {
   const opts = { ...DEFAULT_SETTINGS, ...settings };
+  const isBordered = opts.labelType === 'brother-dk22211-bordered';
+  const MM_TO_PT = 72 / 25.4;
 
   // Generate QR code containing all label information
   const qrContent = buildQRContent(asset, opts);
@@ -131,7 +133,7 @@ export async function createLabelPDF(
 
   // 'brother-dk22211-bordered' is identical to the plain DK-22211 label except for this
   // outline, matching the visible border added to the Dymo 24mm Tape label.
-  if (opts.labelType === 'brother-dk22211-bordered') {
+  if (isBordered) {
     const borderInset = 2;
     page.drawRectangle({
       x: borderInset,
@@ -153,9 +155,10 @@ export async function createLabelPDF(
   const margin = 3;
   const qrSize = 48; // ~17mm - compact to maximize text space
 
-  // QR code on LEFT, vertically centered on full label height
-  const qrX = margin;
-  const qrY = (LABEL_HEIGHT_PT - qrSize) / 2;
+  // QR code on LEFT, vertically centered on full label height. Bordered variant nudges
+  // the QR up and left by 1mm to better center it within the border.
+  const qrX = margin - (isBordered ? MM_TO_PT : 0);
+  const qrY = (LABEL_HEIGHT_PT - qrSize) / 2 + (isBordered ? MM_TO_PT : 0);
 
   page.drawImage(qrImage, {
     x: qrX,
@@ -280,9 +283,8 @@ export async function createLabelPDF(
     const maxFontSize = 14;
     const minFontSize = 6;
 
-    const isBordered = opts.labelType === 'brother-dk22211-bordered';
-    // 1mm in points - the bordered variant nudges the org name up off the border line.
-    const orgYOffset = isBordered ? (1 * 72) / 25.4 : 0;
+    // Bordered variant nudges the org name up off the border line.
+    const orgYOffset = isBordered ? MM_TO_PT : 0;
     const orgY = 4 + orgYOffset;
 
     // Bordered variant gets a divider line above the org name, matching the horizontal
