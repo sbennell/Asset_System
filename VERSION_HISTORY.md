@@ -4,6 +4,30 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.29.6] - 2026-09-09
+
+### Changed
+
+- DYMO 24mm Tape label fine-tuned to match a further-refined DYMO Connect Desktop export: every color (QR, text, dividers, the outer border) now uses one consistent near-black tone instead of pure black for text/QR alongside a separately-toned divider color, the QR code and details text box are repositioned/resized, the vertical divider between them is thicker, the organization-name row and horizontal divider shifted down slightly, and the details font size is 7.9pt (was 8.7pt).
+
+### Technical Details
+
+- `apps/api/src/services/labelService-dymo.ts`: `buildDymoLabelManagerXml()` - replaced `LABELMANAGER_BLACK_BRUSH` and the separate `LABELMANAGER_DIVIDER_BRUSH`/`LABELMANAGER_DIVIDER_FILL_BRUSH` with a single `LABELMANAGER_INK_BRUSH`/`LABELMANAGER_INK_TRANSPARENT_BRUSH` pair (0.13725491/0.12156863/0.1254902) used everywhere - QR, text, dividers, and the top-level `BorderColor` alike; updated `LABELMANAGER_QR_X_IN`/`_Y_IN`/`_WIDTH_IN`/`_HEIGHT_IN`, `LABELMANAGER_DETAILS_X_IN`/`_Y_IN`/`_WIDTH_IN`/`_HEIGHT_IN`, `LABELMANAGER_ORG_X_IN`/`_Y_IN`/`_WIDTH_IN`, and `LABELMANAGER_HDIVIDER_*`/`LABELMANAGER_VDIVIDER_*` position/size constants; details font size 8.7→7.9; reordered `LabelObjects` to QRCode, org `TextObject1` + horizontal divider (conditional), vertical divider, then details `TextObject0` (was QRCode, details, org + both dividers).
+
+---
+
+## [1.29.5] - 2026-09-09
+
+### Changed
+
+- DYMO 24mm Tape label redesigned to match a further-refined DYMO Connect Desktop export: the tape now prints at a **fixed length** (2.8740158in) instead of auto-growing to fit content, gained a **visible border** around the whole label, and added **divider lines** - a vertical rule between the QR code and the details text, and a horizontal rule between the details row and the organization-name row. Reverted the detail-line font from PT Sans back to Arial and all colors back to plain black (the divider lines use a near-black tone). The QR code is now a smaller, repositioned "Large" preset size instead of auto-fitting the available box.
+
+### Technical Details
+
+- `apps/api/src/services/labelService-dymo.ts`: `buildDymoLabelManagerXml()` - `Show_Border` False→True with `BorderColor` set to `LABELMANAGER_BLACK_BRUSH`; `HasFixedLength` False→True with `FixedLengthValue` set to the new `LABELMANAGER_FIXED_LENGTH_IN` (2.8740158) constant; `LABELMANAGER_CONTENT_WIDTH_IN` increased to 2.0406823; QR `Size` `AutoFit`→`Large` with new fixed `LABELMANAGER_QR_X_IN`/`_Y_IN`/`_WIDTH_IN`/`_HEIGHT_IN` position/size constants (was flush to the leader/top-margin); details text box repositioned via new `LABELMANAGER_DETAILS_X_IN`/`_Y_IN` constants, font reverted to `Arial` at 8.7pt (was `PT Sans` at 7.7pt) with `FontBrush` on `LABELMANAGER_BLACK_BRUSH`; organization-name row repositioned via new `LABELMANAGER_ORG_X_IN`/`_WIDTH_IN` constants, `VerticalAlignment` Middle→Top, font stays `Arial` but now black; added a `buildDividerLine()` helper and two `LineObject`s (`LineObject0` horizontal, `LineObject1` vertical) using new `LABELMANAGER_DIVIDER_BRUSH`/`LABELMANAGER_DIVIDER_FILL_BRUSH` colors and `LABELMANAGER_HDIVIDER_*`/`LABELMANAGER_VDIVIDER_*` position constants; removed `LABELMANAGER_ACCENT_BRUSH`, `LABELMANAGER_FILL_BRUSH`, `LABELMANAGER_WHITE_BRUSH`, `LABELMANAGER_DETAILS_FONT`, and `LABELMANAGER_ORG_FONT` (superseded by the single `LABELMANAGER_BLACK_BRUSH`/`LABELMANAGER_TRANSPARENT_BRUSH` and plain `Arial`).
+
+---
+
 ## [1.29.4] - 2026-09-09
 
 ### Fixed
