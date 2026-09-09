@@ -424,14 +424,14 @@ const LABELMANAGER_TAPE_NAME = '24X7-TAPE BLACK/WHITE';
 const LABELMANAGER_INITIAL_LENGTH_IN = 1.57; // starting canvas length baked into the export; GrowingDynamicLayoutManager re-flows the actual print length from content
 const LABELMANAGER_LEADER_IN = 0.41666666; // 10mm leader/trailer (DYMO's "Center" tape alignment)
 const LABELMANAGER_TOP_MARGIN_IN = 0.116666645; // vertical inset baked into the 24mm tape preset
-const LABELMANAGER_CONTENT_WIDTH_IN = 1.6145838; // reserved DYMORect/org-row width
+const LABELMANAGER_CONTENT_WIDTH_IN = 1.9453143; // reserved DYMORect/org-row width
 const LABELMANAGER_CONTENT_HEIGHT_IN = 0.71111107; // usable print height for 24mm tape
 const LABELMANAGER_QR_WIDTH_IN = 0.5896875;
 const LABELMANAGER_QR_HEIGHT_IN = 0.56063426;
-const LABELMANAGER_DETAILS_WIDTH_IN = 0.98293996;
-const LABELMANAGER_DETAILS_HEIGHT_IN = 0.55086863;
+const LABELMANAGER_DETAILS_WIDTH_IN = 1.3556268;
+const LABELMANAGER_DETAILS_HEIGHT_IN = 0.56616765;
 const LABELMANAGER_ORG_Y_IN = 0.67730105;
-const LABELMANAGER_ORG_HEIGHT_IN = 0.14722362;
+const LABELMANAGER_ORG_HEIGHT_IN = 0.14722356;
 
 function dymoBrush(r: number, g: number, b: number, a: number = 1): string {
   return `<SolidColorBrush><Color A="${a}" R="${r}" G="${g}" B="${b}"></Color></SolidColorBrush>`;
@@ -533,20 +533,20 @@ export async function buildDymoLabelManagerXml(asset: LabelAsset, settings: Part
           <BorderStyle>SolidLine</BorderStyle>
           <Margin><DYMOThickness Left="0" Top="0" Right="0" Bottom="0" /></Margin>
           <HorizontalAlignment>Left</HorizontalAlignment>
-          <VerticalAlignment>Middle</VerticalAlignment>
+          <VerticalAlignment>Top</VerticalAlignment>
           <FitMode>AlwaysFit</FitMode>
           <IsVertical>False</IsVertical>
           <FormattedText>
             <FitMode>AlwaysFit</FitMode>
             <HorizontalAlignment>Left</HorizontalAlignment>
-            <VerticalAlignment>Middle</VerticalAlignment>
+            <VerticalAlignment>Top</VerticalAlignment>
             <IsVertical>False</IsVertical>
             ${detailLines.map(line => `<LineTextSpan>
               <TextSpan>
                 <Text>${line.text}</Text>
                 <FontInfo>
                   <FontName>Arial</FontName>
-                  <FontSize>5.6</FontSize>
+                  <FontSize>7.8</FontSize>
                   <IsBold>${line.bold ? 'True' : 'False'}</IsBold>
                   <IsItalic>False</IsItalic>
                   <IsUnderline>False</IsUnderline>
@@ -579,13 +579,13 @@ export async function buildDymoLabelManagerXml(asset: LabelAsset, settings: Part
           <IsOutlined>False</IsOutlined>
           <BorderStyle>SolidLine</BorderStyle>
           <Margin><DYMOThickness Left="0" Top="0" Right="0" Bottom="0" /></Margin>
-          <HorizontalAlignment>Left</HorizontalAlignment>
+          <HorizontalAlignment>Center</HorizontalAlignment>
           <VerticalAlignment>Middle</VerticalAlignment>
           <FitMode>AlwaysFit</FitMode>
           <IsVertical>False</IsVertical>
           <FormattedText>
             <FitMode>AlwaysFit</FitMode>
-            <HorizontalAlignment>Left</HorizontalAlignment>
+            <HorizontalAlignment>Center</HorizontalAlignment>
             <VerticalAlignment>Middle</VerticalAlignment>
             <IsVertical>False</IsVertical>
             <LineTextSpan>
@@ -593,7 +593,7 @@ export async function buildDymoLabelManagerXml(asset: LabelAsset, settings: Part
                 <Text>${orgText}</Text>
                 <FontInfo>
                   <FontName>Arial</FontName>
-                  <FontSize>7.5</FontSize>
+                  <FontSize>8.9</FontSize>
                   <IsBold>True</IsBold>
                   <IsItalic>False</IsItalic>
                   <IsUnderline>False</IsUnderline>

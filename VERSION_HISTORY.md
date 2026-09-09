@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.29.1] - 2026-09-09
+
+### Changed
+
+- DYMO 24mm Tape label widened and re-tuned to match a further-refined DYMO Connect Desktop export: the details and organization-name boxes are wider (content area 1.9453143in, was 1.6145838in), details text grew to 7.8pt (was 5.6pt) and now top-aligns within its box (was middle), and the organization name grew to 8.9pt and is now center-aligned (was left-aligned).
+
+### Technical Details
+
+- `apps/api/src/services/labelService-dymo.ts`: `buildDymoLabelManagerXml()` - `LABELMANAGER_CONTENT_WIDTH_IN` 1.6145838→1.9453143, `LABELMANAGER_DETAILS_WIDTH_IN` 0.98293996→1.3556268, `LABELMANAGER_DETAILS_HEIGHT_IN` 0.55086863→0.56616765, `LABELMANAGER_ORG_HEIGHT_IN` 0.14722362→0.14722356; `Details` `TextObject`/`FormattedText` `VerticalAlignment` Middle→Top and font size 5.6→7.8; `Details1` (org) `TextObject`/`FormattedText` `HorizontalAlignment` Left→Center and font size 7.5→8.9.
+
+---
+
 ## [1.29.0] - 2026-09-09
 
 ### Changed
