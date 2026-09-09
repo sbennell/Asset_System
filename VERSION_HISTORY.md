@@ -4,6 +4,20 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.30.1] - 2026-09-10
+
+### Added
+
+- New "Brother DK-22211 (Bordered)" label size option: identical to the existing Brother DK-22211 label, but with a black outline around the whole label, matching the visible border added to the Dymo 24mm Tape label. Selectable in Settings and both print dialogs.
+
+### Technical Details
+
+- `apps/api/src/services/labelService.ts`: `LabelSettings.labelType` union gained `'brother-dk22211-bordered'`; `createLabelPDF()` draws a `page.drawRectangle()` outline (2pt inset, 1.5pt black border, no fill) when that type is selected - the rest of the layout is unchanged and shared with plain `'brother-dk22211'`; `parseSettings()`'s allowlist check updated so the new value round-trips instead of being coerced back to `'brother-dk22211'`.
+- `apps/api/src/routes/labels.ts`: added `{ id: 'brother-dk22211-bordered', name: 'Brother DK-22211 (Bordered)' }` to `GET /label-types`; the three `req.query.labelType as '...'|'...'` inline unions replaced with `LabelSettings['labelType']` so new label types only need updating in one place going forward.
+- Added the new type to the `labelType` unions in `apps/web/src/lib/api.ts` and `apps/web/src/lib/labelPreferences.ts` (`LabelType`, `getLastLabelType()`), and added a matching `<option>` plus updated `handleLabelTypeChange` signatures in `apps/web/src/pages/settings/GeneralTab.tsx`, `apps/web/src/components/LabelPreviewModal.tsx` (also added to `LABEL_DIMENSIONS_MM`, same 62×29mm as plain DK-22211), and `apps/web/src/components/BatchPrintModal.tsx`.
+
+---
+
 ## [1.30.0] - 2026-09-09
 
 ### Added

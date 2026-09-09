@@ -254,7 +254,7 @@ export interface BulkUpdateResult {
 
 export interface LabelSettings {
   printerName: string;
-  labelType: 'brother-dk22211' | 'dymo-1933081' | 'dymo-labelmanager';
+  labelType: 'brother-dk22211' | 'brother-dk22211-bordered' | 'dymo-1933081' | 'dymo-labelmanager';
   showAssignedTo: boolean;
   showHostname: boolean;
   showIpAddress: boolean;

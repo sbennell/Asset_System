@@ -102,7 +102,7 @@ export default function BatchPrintModal({ assetIds, onClose, onSuccess }: BatchP
     setLabelOptions(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handleLabelTypeChange = (value: 'brother-dk22211' | 'dymo-1933081' | 'dymo-labelmanager') => {
+  const handleLabelTypeChange = (value: 'brother-dk22211' | 'brother-dk22211-bordered' | 'dymo-1933081' | 'dymo-labelmanager') => {
     setLabelOptions(prev => ({ ...prev, labelType: value }));
     setLastLabelType(value);
   };
@@ -128,10 +128,11 @@ export default function BatchPrintModal({ assetIds, onClose, onSuccess }: BatchP
             <label className="label">Label Size</label>
             <select
               value={labelOptions.labelType || 'brother-dk22211'}
-              onChange={(e) => handleLabelTypeChange(e.target.value as 'brother-dk22211' | 'dymo-1933081' | 'dymo-labelmanager')}
+              onChange={(e) => handleLabelTypeChange(e.target.value as 'brother-dk22211' | 'brother-dk22211-bordered' | 'dymo-1933081' | 'dymo-labelmanager')}
               className="input"
             >
               <option value="brother-dk22211">Brother DK-22211 (29×62mm)</option>
+              <option value="brother-dk22211-bordered">Brother DK-22211 (Bordered)</option>
               <option value="dymo-1933081">Dymo 1933081 (25×89mm)</option>
               <option value="dymo-labelmanager">Dymo 24mm Tape</option>
             </select>

@@ -50,7 +50,7 @@ router.get('/preview/:assetId', requireAuth, requirePermission('canAccessAssets'
       settingsMap[s.key] = s.value;
     });
     const settings = parseSettings(settingsMap);
-    const labelTypeOverride = req.query.labelType as 'brother-dk22211' | 'dymo-1933081' | 'dymo-labelmanager' | undefined;
+    const labelTypeOverride = req.query.labelType as LabelSettings['labelType'] | undefined;
     const finalSettings = { ...settings, ...(labelTypeOverride !== undefined && { labelType: labelTypeOverride }) };
 
     // Resolve first IP (all IPs are equal now)
@@ -257,7 +257,7 @@ router.get('/download-batch', requireAuth, requirePermission('canAccessAssets'),
     const showHostname = req.query.showHostname !== undefined ? req.query.showHostname === 'true' : undefined;
     const showIpAddress = req.query.showIpAddress !== undefined ? req.query.showIpAddress === 'true' : undefined;
     const qrCodeContent = req.query.qrCodeContent as 'full' | 'itemNumber' | undefined;
-    const labelType = req.query.labelType as 'brother-dk22211' | 'dymo-1933081' | 'dymo-labelmanager' | undefined;
+    const labelType = req.query.labelType as LabelSettings['labelType'] | undefined;
 
     // Get label settings and organization name
     const settingsRecords = await prisma.settings.findMany({
@@ -381,6 +381,7 @@ router.get('/label-types', requireAuth, requirePermission('canAccessAssets'), as
   try {
     res.json([
       { id: 'brother-dk22211', name: 'Brother DK-22211 (29×62mm)' },
+      { id: 'brother-dk22211-bordered', name: 'Brother DK-22211 (Bordered)' },
       { id: 'dymo-1933081', name: 'Dymo 1933081 (25×89mm)' },
       { id: 'dymo-labelmanager', name: 'Dymo 24mm Tape' },
     ]);
@@ -438,7 +439,7 @@ router.get('/download/:assetId', requireAuth, requirePermission('canAccessAssets
     const showHostname = req.query.showHostname !== undefined ? req.query.showHostname === 'true' : undefined;
     const showIpAddress = req.query.showIpAddress !== undefined ? req.query.showIpAddress === 'true' : undefined;
     const qrCodeContent = req.query.qrCodeContent as 'full' | 'itemNumber' | undefined;
-    const labelType = req.query.labelType as 'brother-dk22211' | 'dymo-1933081' | 'dymo-labelmanager' | undefined;
+    const labelType = req.query.labelType as LabelSettings['labelType'] | undefined;
 
     const asset = await prisma.asset.findUnique({
       where: { id: assetId },

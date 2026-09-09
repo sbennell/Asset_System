@@ -24,7 +24,7 @@ export interface LabelAsset {
 
 export interface LabelSettings {
   printerName: string;
-  labelType: 'brother-dk22211' | 'dymo-1933081' | 'dymo-labelmanager';
+  labelType: 'brother-dk22211' | 'brother-dk22211-bordered' | 'dymo-1933081' | 'dymo-labelmanager';
   showAssignedTo: boolean;
   showHostname: boolean;
   showIpAddress: boolean;
@@ -128,6 +128,20 @@ export async function createLabelPDF(
   // Create PDF document - landscape orientation (62mm x 29mm)
   const doc = await PDFDocument.create();
   const page = doc.addPage([LABEL_WIDTH_PT, LABEL_HEIGHT_PT]);
+
+  // 'brother-dk22211-bordered' is identical to the plain DK-22211 label except for this
+  // outline, matching the visible border added to the Dymo 24mm Tape label.
+  if (opts.labelType === 'brother-dk22211-bordered') {
+    const borderInset = 2;
+    page.drawRectangle({
+      x: borderInset,
+      y: borderInset,
+      width: LABEL_WIDTH_PT - borderInset * 2,
+      height: LABEL_HEIGHT_PT - borderInset * 2,
+      borderColor: rgb(0, 0, 0),
+      borderWidth: 1.5,
+    });
+  }
 
   // Embed bold font for all text
   const boldFont = await doc.embedFont(StandardFonts.HelveticaBold);
@@ -472,8 +486,8 @@ export function parseSettings(
 
   return {
     printerName: get('label.printerName') || DEFAULT_SETTINGS.printerName,
-    labelType: (['dymo-1933081', 'dymo-labelmanager'].includes(get('label.labelType') || '')
-      ? get('label.labelType') as 'dymo-1933081' | 'dymo-labelmanager'
+    labelType: (['brother-dk22211-bordered', 'dymo-1933081', 'dymo-labelmanager'].includes(get('label.labelType') || '')
+      ? get('label.labelType') as 'brother-dk22211-bordered' | 'dymo-1933081' | 'dymo-labelmanager'
       : 'brother-dk22211'),
     showAssignedTo: get('label.showAssignedTo') !== 'false',
     showHostname: get('label.showHostname') !== 'false',
