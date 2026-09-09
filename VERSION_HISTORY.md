@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.30.2] - 2026-09-10
+
+### Changed
+
+- Brother DK-22211 (Bordered) label: added a horizontal divider line above the Organization Name, matching the rule above the org-name row on the Dymo 24mm Tape label. Also nudged the Organization Name (and its new divider) up by 1mm since it was sitting right on the label's border line.
+
+### Technical Details
+
+- `apps/api/src/services/labelService.ts`: `createLabelPDF()` - when `opts.labelType === 'brother-dk22211-bordered'`, draws a `page.drawLine()` divider above the org-name text and shifts both the org text's `y` and the divider's `y` up by `orgYOffset` (1mm converted to points, `(1 * 72) / 25.4`); the plain `'brother-dk22211'` label is unaffected (no divider, org `y` unchanged at 4).
+
+---
+
 ## [1.30.1] - 2026-09-10
 
 ### Added

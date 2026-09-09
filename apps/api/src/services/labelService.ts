@@ -280,6 +280,23 @@ export async function createLabelPDF(
     const maxFontSize = 14;
     const minFontSize = 6;
 
+    const isBordered = opts.labelType === 'brother-dk22211-bordered';
+    // 1mm in points - the bordered variant nudges the org name up off the border line.
+    const orgYOffset = isBordered ? (1 * 72) / 25.4 : 0;
+    const orgY = 4 + orgYOffset;
+
+    // Bordered variant gets a divider line above the org name, matching the horizontal
+    // rule above the org-name row on the Dymo 24mm Tape label.
+    if (isBordered) {
+      const dividerY = 16 + orgYOffset;
+      page.drawLine({
+        start: { x: margin, y: dividerY },
+        end: { x: LABEL_WIDTH_PT - margin, y: dividerY },
+        thickness: 1,
+        color: rgb(0, 0, 0),
+      });
+    }
+
     // Calculate font size to fit text within available width
     let orgFontSize = maxFontSize;
     let orgWidth = boldFont.widthOfTextAtSize(orgText, orgFontSize);
@@ -292,7 +309,7 @@ export async function createLabelPDF(
 
     page.drawText(orgText, {
       x: (LABEL_WIDTH_PT - orgWidth) / 2,
-      y: 4,
+      y: orgY,
       size: orgFontSize,
       font: boldFont,
       color: rgb(0, 0, 0),
