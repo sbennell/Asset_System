@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.29.0] - 2026-09-09
+
+### Changed
+
+- DYMO 24mm Tape label rebuilt to match a newly manually-tuned DYMO Connect Desktop export: switched from a fixed-length `ContinuousLayoutManager` to a `GrowingDynamicLayoutManager`, shrank the QR code to a fixed top-left square (was full label height) with the details text box beside it, moved the organization name into its own row spanning the full width underneath (was appended inside the details text box), reduced the details text to 5.6pt (was 8.5pt) with the organization name at 7.5pt, removed the details box's left text inset, and switched all borders/strokes/font colors and the QR module color to the near-black/gray tones from the export (was pure black).
+
+### Technical Details
+
+- `apps/api/src/services/labelService-dymo.ts`: `buildDymoLabelManagerXml()` - replaced `ContinuousLayoutManager` with `GrowingDynamicLayoutManager`; replaced `LABELMANAGER_QR_SIZE_IN`/`LABELMANAGER_TEXT_WIDTH_IN`/`LABELMANAGER_TEXT_OBJECT_WIDTH_IN`/`LABELMANAGER_QR_TEXT_OVERLAP_IN` with `LABELMANAGER_CONTENT_WIDTH_IN`, `LABELMANAGER_QR_WIDTH_IN`/`_HEIGHT_IN`, `LABELMANAGER_DETAILS_WIDTH_IN`/`_HEIGHT_IN`, and `LABELMANAGER_ORG_Y_IN`/`_HEIGHT_IN`; added a conditional `Details1` `TextObject` for the organization name; replaced `dymoBlackBrush()` with `LABELMANAGER_ACCENT_BRUSH`/`LABELMANAGER_FILL_BRUSH`/`LABELMANAGER_TRANSPARENT_BRUSH`/`LABELMANAGER_WHITE_BRUSH`; `InitialLength` now the fixed `LABELMANAGER_INITIAL_LENGTH_IN` (1.57) instead of a computed value.
+
+---
+
 ## [1.28.32] - 2026-09-07
 
 ### Changed

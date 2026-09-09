@@ -412,24 +412,35 @@ export async function buildDymoLabelXml(asset: LabelAsset, settings: Partial<Lab
 
 // The LabelManager Executive 640 is a continuous D1-tape device, not a die-cut
 // LabelWriter - DYMO Connect only accepts continuous-media labels in its newer
-// DesktopLabel/DYMOLabel/ContinuousLayoutManager schema (inches, not twips; see
+// DesktopLabel/DYMOLabel/GrowingDynamicLayoutManager schema (inches, not twips; see
 // buildAddressStyleLabelXml above for the twips-based DieCutLabel schema used by the
-// 1933081). The constants below (tape preset name, leader/trailer, usable print area)
-// were read directly off a label exported from DYMO Connect Desktop for this printer/
-// tape - DYMO computes and bakes them into every label for this tape preset, they
-// aren't values we chose, so they should hold for any label using the same cassette.
+// 1933081). The constants below (tape preset name, leader/trailer, box positions/sizes)
+// were read directly off a label exported from DYMO Connect Desktop after manual tuning
+// for this printer/tape - they aren't values we chose, so they should hold for any
+// label using the same cassette. Layout is a QR square top-left, a details text box to
+// its right (Assigned To/Item/Model/Serial), and an organization-name row spanning the
+// full width underneath.
 const LABELMANAGER_TAPE_NAME = '24X7-TAPE BLACK/WHITE';
+const LABELMANAGER_INITIAL_LENGTH_IN = 1.57; // starting canvas length baked into the export; GrowingDynamicLayoutManager re-flows the actual print length from content
 const LABELMANAGER_LEADER_IN = 0.41666666; // 10mm leader/trailer (DYMO's "Center" tape alignment)
 const LABELMANAGER_TOP_MARGIN_IN = 0.116666645; // vertical inset baked into the 24mm tape preset
+const LABELMANAGER_CONTENT_WIDTH_IN = 1.6145838; // reserved DYMORect/org-row width
 const LABELMANAGER_CONTENT_HEIGHT_IN = 0.71111107; // usable print height for 24mm tape
-const LABELMANAGER_QR_SIZE_IN = LABELMANAGER_CONTENT_HEIGHT_IN;
-const LABELMANAGER_TEXT_WIDTH_IN = 1.8; // reserved box width; drives DYMORect/InitialLength
-const LABELMANAGER_TEXT_OBJECT_WIDTH_IN = 1.7828838; // the TextObject's own render width, matching a label exported after manual tuning in DYMO Connect Desktop
-const LABELMANAGER_QR_TEXT_OVERLAP_IN = 0; // see note below - overlapping shifted the whole label
+const LABELMANAGER_QR_WIDTH_IN = 0.5896875;
+const LABELMANAGER_QR_HEIGHT_IN = 0.56063426;
+const LABELMANAGER_DETAILS_WIDTH_IN = 0.98293996;
+const LABELMANAGER_DETAILS_HEIGHT_IN = 0.55086863;
+const LABELMANAGER_ORG_Y_IN = 0.67730105;
+const LABELMANAGER_ORG_HEIGHT_IN = 0.14722362;
 
-function dymoBlackBrush(): string {
-  return '<SolidColorBrush><Color A="1" R="0" G="0" B="0"></Color></SolidColorBrush>';
+function dymoBrush(r: number, g: number, b: number, a: number = 1): string {
+  return `<SolidColorBrush><Color A="${a}" R="${r}" G="${g}" B="${b}"></Color></SolidColorBrush>`;
 }
+// Border/stroke/font color and QR module fill color, matching the manually-tuned export.
+const LABELMANAGER_ACCENT_BRUSH = dymoBrush(0.274, 0.261, 0.265);
+const LABELMANAGER_FILL_BRUSH = dymoBrush(0.13725491, 0.12156863, 0.1254902);
+const LABELMANAGER_TRANSPARENT_BRUSH = dymoBrush(0, 0, 0, 0);
+const LABELMANAGER_WHITE_BRUSH = dymoBrush(1, 1, 1);
 
 /**
  * Build a native DYMO label XML for the LabelManager Executive 640 (24mm tape),
@@ -443,19 +454,13 @@ export async function buildDymoLabelManagerXml(asset: LabelAsset, settings: Part
   // omitted here regardless of the showHostname/showIpAddress settings.
   const { qrContent, assignedText, itemText, modelText, serialText, orgText } = deriveLabelFields(asset, opts);
 
-  const lines: { text: string; size: number; bold: boolean }[] = [];
-  if (assignedText) lines.push({ text: assignedText, size: 8.5, bold: true });
-  lines.push({ text: itemText, size: 8.5, bold: true });
-  if (modelText) lines.push({ text: modelText, size: 8.5, bold: true });
-  if (serialText) lines.push({ text: serialText, size: 8.5, bold: true });
-  if (orgText) lines.push({ text: orgText, size: 8.5, bold: true });
+  const detailLines: { text: string; bold: boolean }[] = [];
+  if (assignedText) detailLines.push({ text: assignedText, bold: true });
+  detailLines.push({ text: itemText, bold: true });
+  if (modelText) detailLines.push({ text: modelText, bold: true });
+  if (serialText) detailLines.push({ text: serialText, bold: true });
 
-  // The QR box's own quiet-zone (the blank margin the renderer leaves around the QR
-  // pattern for scannability) reads as visible whitespace between the two objects even
-  // though their boxes are flush - pull the text box left into that margin to close it.
-  const contentWidth = LABELMANAGER_QR_SIZE_IN + LABELMANAGER_TEXT_WIDTH_IN - LABELMANAGER_QR_TEXT_OVERLAP_IN;
-  const initialLength = LABELMANAGER_LEADER_IN * 2 + contentWidth;
-  const textX = LABELMANAGER_LEADER_IN + LABELMANAGER_QR_SIZE_IN - LABELMANAGER_QR_TEXT_OVERLAP_IN;
+  const textX = LABELMANAGER_LEADER_IN + LABELMANAGER_QR_WIDTH_IN;
 
   return `<?xml version="1.0" encoding="utf-8"?>
 <DesktopLabel Version="1">
@@ -463,7 +468,7 @@ export async function buildDymoLabelManagerXml(asset: LabelAsset, settings: Part
     <Description>DYMO Label</Description>
     <Orientation>Landscape</Orientation>
     <LabelName>${LABELMANAGER_TAPE_NAME}</LabelName>
-    <InitialLength>${initialLength}</InitialLength>
+    <InitialLength>${LABELMANAGER_INITIAL_LENGTH_IN}</InitialLength>
     <BorderStyle>SolidLine</BorderStyle>
     <DYMORect>
       <DYMOPoint>
@@ -471,25 +476,25 @@ export async function buildDymoLabelManagerXml(asset: LabelAsset, settings: Part
         <Y>${LABELMANAGER_TOP_MARGIN_IN}</Y>
       </DYMOPoint>
       <Size>
-        <Width>${contentWidth}</Width>
+        <Width>${LABELMANAGER_CONTENT_WIDTH_IN}</Width>
         <Height>${LABELMANAGER_CONTENT_HEIGHT_IN}</Height>
       </Size>
     </DYMORect>
-    <BorderColor>${dymoBlackBrush()}</BorderColor>
+    <BorderColor>${LABELMANAGER_FILL_BRUSH}</BorderColor>
     <BorderThickness>1</BorderThickness>
     <Show_Border>False</Show_Border>
     <HasFixedLength>False</HasFixedLength>
     <FixedLengthValue>0</FixedLengthValue>
-    <ContinuousLayoutManager>
+    <GrowingDynamicLayoutManager>
       <RotationBehavior>ClearObjects</RotationBehavior>
       <LabelObjects>
         <QRCodeObject>
           <Name>QRCode</Name>
           <Brushes>
-            <BackgroundBrush><SolidColorBrush><Color A="1" R="1" G="1" B="1"></Color></SolidColorBrush></BackgroundBrush>
-            <BorderBrush>${dymoBlackBrush()}</BorderBrush>
-            <StrokeBrush>${dymoBlackBrush()}</StrokeBrush>
-            <FillBrush>${dymoBlackBrush()}</FillBrush>
+            <BackgroundBrush>${LABELMANAGER_WHITE_BRUSH}</BackgroundBrush>
+            <BorderBrush>${LABELMANAGER_ACCENT_BRUSH}</BorderBrush>
+            <StrokeBrush>${LABELMANAGER_ACCENT_BRUSH}</StrokeBrush>
+            <FillBrush>${LABELMANAGER_FILL_BRUSH}</FillBrush>
           </Brushes>
           <Rotation>Rotation0</Rotation>
           <OutlineThickness>1</OutlineThickness>
@@ -509,24 +514,24 @@ export async function buildDymoLabelManagerXml(asset: LabelAsset, settings: Part
               <Y>${LABELMANAGER_TOP_MARGIN_IN}</Y>
             </DYMOPoint>
             <Size>
-              <Width>${LABELMANAGER_QR_SIZE_IN}</Width>
-              <Height>${LABELMANAGER_CONTENT_HEIGHT_IN}</Height>
+              <Width>${LABELMANAGER_QR_WIDTH_IN}</Width>
+              <Height>${LABELMANAGER_QR_HEIGHT_IN}</Height>
             </Size>
           </ObjectLayout>
         </QRCodeObject>
         <TextObject>
           <Name>Details</Name>
           <Brushes>
-            <BackgroundBrush><SolidColorBrush><Color A="0" R="0" G="0" B="0"></Color></SolidColorBrush></BackgroundBrush>
-            <BorderBrush>${dymoBlackBrush()}</BorderBrush>
-            <StrokeBrush>${dymoBlackBrush()}</StrokeBrush>
-            <FillBrush><SolidColorBrush><Color A="0" R="0" G="0" B="0"></Color></SolidColorBrush></FillBrush>
+            <BackgroundBrush>${LABELMANAGER_TRANSPARENT_BRUSH}</BackgroundBrush>
+            <BorderBrush>${LABELMANAGER_ACCENT_BRUSH}</BorderBrush>
+            <StrokeBrush>${LABELMANAGER_ACCENT_BRUSH}</StrokeBrush>
+            <FillBrush>${LABELMANAGER_TRANSPARENT_BRUSH}</FillBrush>
           </Brushes>
           <Rotation>Rotation0</Rotation>
           <OutlineThickness>1</OutlineThickness>
           <IsOutlined>False</IsOutlined>
           <BorderStyle>SolidLine</BorderStyle>
-          <Margin><DYMOThickness Left="0.03937008" Top="0" Right="0" Bottom="0" /></Margin>
+          <Margin><DYMOThickness Left="0" Top="0" Right="0" Bottom="0" /></Margin>
           <HorizontalAlignment>Left</HorizontalAlignment>
           <VerticalAlignment>Middle</VerticalAlignment>
           <FitMode>AlwaysFit</FitMode>
@@ -536,16 +541,16 @@ export async function buildDymoLabelManagerXml(asset: LabelAsset, settings: Part
             <HorizontalAlignment>Left</HorizontalAlignment>
             <VerticalAlignment>Middle</VerticalAlignment>
             <IsVertical>False</IsVertical>
-            ${lines.map(line => `<LineTextSpan>
+            ${detailLines.map(line => `<LineTextSpan>
               <TextSpan>
                 <Text>${line.text}</Text>
                 <FontInfo>
                   <FontName>Arial</FontName>
-                  <FontSize>${line.size}</FontSize>
+                  <FontSize>5.6</FontSize>
                   <IsBold>${line.bold ? 'True' : 'False'}</IsBold>
                   <IsItalic>False</IsItalic>
                   <IsUnderline>False</IsUnderline>
-                  <FontBrush>${dymoBlackBrush()}</FontBrush>
+                  <FontBrush>${LABELMANAGER_ACCENT_BRUSH}</FontBrush>
                 </FontInfo>
               </TextSpan>
             </LineTextSpan>`).join('\n            ')}
@@ -556,13 +561,60 @@ export async function buildDymoLabelManagerXml(asset: LabelAsset, settings: Part
               <Y>${LABELMANAGER_TOP_MARGIN_IN}</Y>
             </DYMOPoint>
             <Size>
-              <Width>${LABELMANAGER_TEXT_OBJECT_WIDTH_IN}</Width>
-              <Height>${LABELMANAGER_CONTENT_HEIGHT_IN}</Height>
+              <Width>${LABELMANAGER_DETAILS_WIDTH_IN}</Width>
+              <Height>${LABELMANAGER_DETAILS_HEIGHT_IN}</Height>
             </Size>
           </ObjectLayout>
         </TextObject>
+        ${orgText ? `<TextObject>
+          <Name>Details1</Name>
+          <Brushes>
+            <BackgroundBrush>${LABELMANAGER_TRANSPARENT_BRUSH}</BackgroundBrush>
+            <BorderBrush>${LABELMANAGER_ACCENT_BRUSH}</BorderBrush>
+            <StrokeBrush>${LABELMANAGER_ACCENT_BRUSH}</StrokeBrush>
+            <FillBrush>${LABELMANAGER_TRANSPARENT_BRUSH}</FillBrush>
+          </Brushes>
+          <Rotation>Rotation0</Rotation>
+          <OutlineThickness>1</OutlineThickness>
+          <IsOutlined>False</IsOutlined>
+          <BorderStyle>SolidLine</BorderStyle>
+          <Margin><DYMOThickness Left="0" Top="0" Right="0" Bottom="0" /></Margin>
+          <HorizontalAlignment>Left</HorizontalAlignment>
+          <VerticalAlignment>Middle</VerticalAlignment>
+          <FitMode>AlwaysFit</FitMode>
+          <IsVertical>False</IsVertical>
+          <FormattedText>
+            <FitMode>AlwaysFit</FitMode>
+            <HorizontalAlignment>Left</HorizontalAlignment>
+            <VerticalAlignment>Middle</VerticalAlignment>
+            <IsVertical>False</IsVertical>
+            <LineTextSpan>
+              <TextSpan>
+                <Text>${orgText}</Text>
+                <FontInfo>
+                  <FontName>Arial</FontName>
+                  <FontSize>7.5</FontSize>
+                  <IsBold>True</IsBold>
+                  <IsItalic>False</IsItalic>
+                  <IsUnderline>False</IsUnderline>
+                  <FontBrush>${LABELMANAGER_ACCENT_BRUSH}</FontBrush>
+                </FontInfo>
+              </TextSpan>
+            </LineTextSpan>
+          </FormattedText>
+          <ObjectLayout>
+            <DYMOPoint>
+              <X>${LABELMANAGER_LEADER_IN}</X>
+              <Y>${LABELMANAGER_ORG_Y_IN}</Y>
+            </DYMOPoint>
+            <Size>
+              <Width>${LABELMANAGER_CONTENT_WIDTH_IN}</Width>
+              <Height>${LABELMANAGER_ORG_HEIGHT_IN}</Height>
+            </Size>
+          </ObjectLayout>
+        </TextObject>` : ''}
       </LabelObjects>
-    </ContinuousLayoutManager>
+    </GrowingDynamicLayoutManager>
   </DYMOLabel>
   <LabelApplication>Blank</LabelApplication>
   <DataTable>
