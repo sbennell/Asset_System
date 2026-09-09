@@ -424,23 +424,29 @@ const LABELMANAGER_TAPE_NAME = '24X7-TAPE BLACK/WHITE';
 const LABELMANAGER_INITIAL_LENGTH_IN = 1.57; // starting canvas length baked into the export; GrowingDynamicLayoutManager re-flows the actual print length from content
 const LABELMANAGER_LEADER_IN = 0.41666666; // 10mm leader/trailer (DYMO's "Center" tape alignment)
 const LABELMANAGER_TOP_MARGIN_IN = 0.116666645; // vertical inset baked into the 24mm tape preset
-const LABELMANAGER_CONTENT_WIDTH_IN = 1.9453143; // reserved DYMORect/org-row width
+const LABELMANAGER_CONTENT_WIDTH_IN = 1.9427062; // reserved DYMORect/org-row width
 const LABELMANAGER_CONTENT_HEIGHT_IN = 0.71111107; // usable print height for 24mm tape
 const LABELMANAGER_QR_WIDTH_IN = 0.5896875;
 const LABELMANAGER_QR_HEIGHT_IN = 0.56063426;
-const LABELMANAGER_DETAILS_WIDTH_IN = 1.3556268;
+const LABELMANAGER_DETAILS_WIDTH_IN = 1.3478158;
 const LABELMANAGER_DETAILS_HEIGHT_IN = 0.56616765;
 const LABELMANAGER_ORG_Y_IN = 0.67730105;
 const LABELMANAGER_ORG_HEIGHT_IN = 0.14722356;
+// Detail lines (Assigned To/Item/Model/Serial) render in PT Sans - Arial produced the
+// dotted/illegible print output reported on this tape printer, confirmed fixed by
+// switching to PT Sans in a DYMO Connect Desktop export. The org-name row is unaffected
+// and keeps Arial.
+const LABELMANAGER_DETAILS_FONT = 'PT Sans';
+const LABELMANAGER_ORG_FONT = 'Arial';
 
 function dymoBrush(r: number, g: number, b: number, a: number = 1): string {
   return `<SolidColorBrush><Color A="${a}" R="${r}" G="${g}" B="${b}"></Color></SolidColorBrush>`;
 }
-// The manually-tuned export's near-black/gray text and border color (0.274/0.261/0.265,
-// 0.137/0.122/0.125) dithers on this thermal tape printer - fine as a screen/desktop
-// preview color, but on the monochrome print head it breaks small glyph edges into a
-// speckled dot pattern instead of solid strokes. Pure black avoids dithering entirely.
-const LABELMANAGER_BLACK_BRUSH = dymoBrush(0, 0, 0);
+// Border/stroke color (lighter gray) vs. text/QR-module fill color (near-black) matching
+// the manually-tuned export. Text FontBrush uses the near-black fill, not the gray accent
+// (see LABELMANAGER_DETAILS_FONT note above re: the dotted-text fix).
+const LABELMANAGER_ACCENT_BRUSH = dymoBrush(0.274, 0.261, 0.265);
+const LABELMANAGER_FILL_BRUSH = dymoBrush(0.13725491, 0.12156863, 0.1254902);
 const LABELMANAGER_TRANSPARENT_BRUSH = dymoBrush(0, 0, 0, 0);
 const LABELMANAGER_WHITE_BRUSH = dymoBrush(1, 1, 1);
 
@@ -482,7 +488,7 @@ export async function buildDymoLabelManagerXml(asset: LabelAsset, settings: Part
         <Height>${LABELMANAGER_CONTENT_HEIGHT_IN}</Height>
       </Size>
     </DYMORect>
-    <BorderColor>${LABELMANAGER_BLACK_BRUSH}</BorderColor>
+    <BorderColor>${LABELMANAGER_FILL_BRUSH}</BorderColor>
     <BorderThickness>1</BorderThickness>
     <Show_Border>False</Show_Border>
     <HasFixedLength>False</HasFixedLength>
@@ -490,13 +496,60 @@ export async function buildDymoLabelManagerXml(asset: LabelAsset, settings: Part
     <GrowingDynamicLayoutManager>
       <RotationBehavior>ClearObjects</RotationBehavior>
       <LabelObjects>
+        <TextObject>
+          <Name>Details</Name>
+          <Brushes>
+            <BackgroundBrush>${LABELMANAGER_TRANSPARENT_BRUSH}</BackgroundBrush>
+            <BorderBrush>${LABELMANAGER_ACCENT_BRUSH}</BorderBrush>
+            <StrokeBrush>${LABELMANAGER_ACCENT_BRUSH}</StrokeBrush>
+            <FillBrush>${LABELMANAGER_TRANSPARENT_BRUSH}</FillBrush>
+          </Brushes>
+          <Rotation>Rotation0</Rotation>
+          <OutlineThickness>1</OutlineThickness>
+          <IsOutlined>False</IsOutlined>
+          <BorderStyle>SolidLine</BorderStyle>
+          <Margin><DYMOThickness Left="0" Top="0" Right="0" Bottom="0" /></Margin>
+          <HorizontalAlignment>Left</HorizontalAlignment>
+          <VerticalAlignment>Middle</VerticalAlignment>
+          <FitMode>AlwaysFit</FitMode>
+          <IsVertical>False</IsVertical>
+          <FormattedText>
+            <FitMode>AlwaysFit</FitMode>
+            <HorizontalAlignment>Left</HorizontalAlignment>
+            <VerticalAlignment>Middle</VerticalAlignment>
+            <IsVertical>False</IsVertical>
+            ${detailLines.map(line => `<LineTextSpan>
+              <TextSpan>
+                <Text>${line.text}</Text>
+                <FontInfo>
+                  <FontName>${LABELMANAGER_DETAILS_FONT}</FontName>
+                  <FontSize>7.7</FontSize>
+                  <IsBold>${line.bold ? 'True' : 'False'}</IsBold>
+                  <IsItalic>False</IsItalic>
+                  <IsUnderline>False</IsUnderline>
+                  <FontBrush>${LABELMANAGER_FILL_BRUSH}</FontBrush>
+                </FontInfo>
+              </TextSpan>
+            </LineTextSpan>`).join('\n            ')}
+          </FormattedText>
+          <ObjectLayout>
+            <DYMOPoint>
+              <X>${textX}</X>
+              <Y>${LABELMANAGER_TOP_MARGIN_IN}</Y>
+            </DYMOPoint>
+            <Size>
+              <Width>${LABELMANAGER_DETAILS_WIDTH_IN}</Width>
+              <Height>${LABELMANAGER_DETAILS_HEIGHT_IN}</Height>
+            </Size>
+          </ObjectLayout>
+        </TextObject>
         <QRCodeObject>
           <Name>QRCode</Name>
           <Brushes>
             <BackgroundBrush>${LABELMANAGER_WHITE_BRUSH}</BackgroundBrush>
-            <BorderBrush>${LABELMANAGER_BLACK_BRUSH}</BorderBrush>
-            <StrokeBrush>${LABELMANAGER_BLACK_BRUSH}</StrokeBrush>
-            <FillBrush>${LABELMANAGER_BLACK_BRUSH}</FillBrush>
+            <BorderBrush>${LABELMANAGER_ACCENT_BRUSH}</BorderBrush>
+            <StrokeBrush>${LABELMANAGER_ACCENT_BRUSH}</StrokeBrush>
+            <FillBrush>${LABELMANAGER_FILL_BRUSH}</FillBrush>
           </Brushes>
           <Rotation>Rotation0</Rotation>
           <OutlineThickness>1</OutlineThickness>
@@ -521,59 +574,12 @@ export async function buildDymoLabelManagerXml(asset: LabelAsset, settings: Part
             </Size>
           </ObjectLayout>
         </QRCodeObject>
-        <TextObject>
-          <Name>Details</Name>
-          <Brushes>
-            <BackgroundBrush>${LABELMANAGER_TRANSPARENT_BRUSH}</BackgroundBrush>
-            <BorderBrush>${LABELMANAGER_BLACK_BRUSH}</BorderBrush>
-            <StrokeBrush>${LABELMANAGER_BLACK_BRUSH}</StrokeBrush>
-            <FillBrush>${LABELMANAGER_TRANSPARENT_BRUSH}</FillBrush>
-          </Brushes>
-          <Rotation>Rotation0</Rotation>
-          <OutlineThickness>1</OutlineThickness>
-          <IsOutlined>False</IsOutlined>
-          <BorderStyle>SolidLine</BorderStyle>
-          <Margin><DYMOThickness Left="0" Top="0" Right="0" Bottom="0" /></Margin>
-          <HorizontalAlignment>Left</HorizontalAlignment>
-          <VerticalAlignment>Top</VerticalAlignment>
-          <FitMode>AlwaysFit</FitMode>
-          <IsVertical>False</IsVertical>
-          <FormattedText>
-            <FitMode>AlwaysFit</FitMode>
-            <HorizontalAlignment>Left</HorizontalAlignment>
-            <VerticalAlignment>Top</VerticalAlignment>
-            <IsVertical>False</IsVertical>
-            ${detailLines.map(line => `<LineTextSpan>
-              <TextSpan>
-                <Text>${line.text}</Text>
-                <FontInfo>
-                  <FontName>Arial</FontName>
-                  <FontSize>7.8</FontSize>
-                  <IsBold>${line.bold ? 'True' : 'False'}</IsBold>
-                  <IsItalic>False</IsItalic>
-                  <IsUnderline>False</IsUnderline>
-                  <FontBrush>${LABELMANAGER_BLACK_BRUSH}</FontBrush>
-                </FontInfo>
-              </TextSpan>
-            </LineTextSpan>`).join('\n            ')}
-          </FormattedText>
-          <ObjectLayout>
-            <DYMOPoint>
-              <X>${textX}</X>
-              <Y>${LABELMANAGER_TOP_MARGIN_IN}</Y>
-            </DYMOPoint>
-            <Size>
-              <Width>${LABELMANAGER_DETAILS_WIDTH_IN}</Width>
-              <Height>${LABELMANAGER_DETAILS_HEIGHT_IN}</Height>
-            </Size>
-          </ObjectLayout>
-        </TextObject>
         ${orgText ? `<TextObject>
           <Name>Details1</Name>
           <Brushes>
             <BackgroundBrush>${LABELMANAGER_TRANSPARENT_BRUSH}</BackgroundBrush>
-            <BorderBrush>${LABELMANAGER_BLACK_BRUSH}</BorderBrush>
-            <StrokeBrush>${LABELMANAGER_BLACK_BRUSH}</StrokeBrush>
+            <BorderBrush>${LABELMANAGER_ACCENT_BRUSH}</BorderBrush>
+            <StrokeBrush>${LABELMANAGER_ACCENT_BRUSH}</StrokeBrush>
             <FillBrush>${LABELMANAGER_TRANSPARENT_BRUSH}</FillBrush>
           </Brushes>
           <Rotation>Rotation0</Rotation>
@@ -594,12 +600,12 @@ export async function buildDymoLabelManagerXml(asset: LabelAsset, settings: Part
               <TextSpan>
                 <Text>${orgText}</Text>
                 <FontInfo>
-                  <FontName>Arial</FontName>
+                  <FontName>${LABELMANAGER_ORG_FONT}</FontName>
                   <FontSize>8.9</FontSize>
                   <IsBold>True</IsBold>
                   <IsItalic>False</IsItalic>
                   <IsUnderline>False</IsUnderline>
-                  <FontBrush>${LABELMANAGER_BLACK_BRUSH}</FontBrush>
+                  <FontBrush>${LABELMANAGER_FILL_BRUSH}</FontBrush>
                 </FontInfo>
               </TextSpan>
             </LineTextSpan>

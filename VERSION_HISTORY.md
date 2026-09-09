@@ -4,6 +4,30 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.29.4] - 2026-09-09
+
+### Fixed
+
+- Found the real cause of the dotted/illegible text on the DYMO 24mm Tape label: it was the **Arial** font, not color. Detail lines (Assigned To/Item/Model/Serial) now render in **PT Sans**, confirmed fixed in a DYMO Connect Desktop export - the organization-name row is unaffected and keeps Arial. Also darkened the text fill to the near-black tone (object borders/strokes stay the lighter gray) and reordered/resized the label objects slightly to match the confirmed-working export.
+
+### Technical Details
+
+- `apps/api/src/services/labelService-dymo.ts`: `buildDymoLabelManagerXml()` - added `LABELMANAGER_DETAILS_FONT` ('PT Sans') and `LABELMANAGER_ORG_FONT` ('Arial'); detail-line `FontInfo`/`FontBrush` now use `LABELMANAGER_DETAILS_FONT` and `LABELMANAGER_FILL_BRUSH` (was `Arial` and `LABELMANAGER_ACCENT_BRUSH`); org-row `FontBrush` likewise switched to `LABELMANAGER_FILL_BRUSH`; `Details` `TextObject`/`FormattedText` `VerticalAlignment` reverted Top→Middle; `LABELMANAGER_CONTENT_WIDTH_IN` 1.9453143→1.9427062, `LABELMANAGER_DETAILS_WIDTH_IN` 1.3556268→1.3478158, detail font size 7.8→7.7; `LabelObjects` order changed to Details, QRCode, Details1 (was QRCode, Details, Details1).
+
+---
+
+## [1.29.3] - 2026-09-09
+
+### Changed
+
+- Reverted the 1.29.2 pure-black color change on the DYMO 24mm Tape label - it was based on a wrong diagnosis. The user's own working, dot-free label exported from DYMO Connect Desktop still uses the gray `0.274/0.261/0.265` text/border color and near-black `0.13725491/0.12156863/0.1254902` QR fill, confirming that color was never the cause of the dotted/illegible print output. Restored both colors; the actual cause of the dots remains unidentified.
+
+### Technical Details
+
+- `apps/api/src/services/labelService-dymo.ts`: `buildDymoLabelManagerXml()` - reinstated `LABELMANAGER_ACCENT_BRUSH` (0.274/0.261/0.265) and `LABELMANAGER_FILL_BRUSH` (0.13725491/0.12156863/0.1254902) in place of the single `LABELMANAGER_BLACK_BRUSH` added in 1.29.2, restoring the 1.29.1 color usage exactly (QR `FillBrush` and the top-level `BorderColor` use the near-black fill; everything else - QR border/stroke, text border/stroke/font - uses the gray accent).
+
+---
+
 ## [1.29.2] - 2026-09-09
 
 ### Fixed
