@@ -201,9 +201,11 @@ export async function createLabelPDF(
       assignedWidth = boldFont.widthOfTextAtSize(assignedText, assignedFontSize);
     }
 
+    // Bordered variant nudges the Assigned To text down 0.5mm - it was still touching
+    // the top border.
     page.drawText(assignedText, {
       x: (LABEL_WIDTH_PT - assignedWidth) / 2,
-      y: LABEL_HEIGHT_PT - topMargin,
+      y: LABEL_HEIGHT_PT - topMargin - (isBordered ? 0.5 * MM_TO_PT : 0),
       size: assignedFontSize,
       font: boldFont,
       color: rgb(0, 0, 0),

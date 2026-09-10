@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.30.18] - 2026-09-10
+
+### Changed
+
+- Brother DK-22211 (Bordered) label: Assigned To text moved down 0.5mm - it was still touching the top border.
+
+### Technical Details
+
+- `apps/api/src/services/labelService.ts`: `createLabelPDF()` - the Assigned To text's `y` now subtracts `0.5 * MM_TO_PT` when `isBordered`.
+
+---
+
 ## [1.30.17] - 2026-09-10
 
 ### Changed
