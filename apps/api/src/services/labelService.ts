@@ -304,11 +304,12 @@ export async function createLabelPDF(
     const orgY = 4 + (isBordered ? MM_TO_PT : 0);
 
     // Bordered variant gets a divider line above the org name, matching the horizontal
-    // rule above the org-name row on the Dymo 24mm Tape label.
+    // rule above the org-name row on the Dymo 24mm Tape label. Runs edge-to-edge between
+    // the left/right border, same as the vertical QR/text divider reaches the top border.
     if (isBordered) {
       page.drawLine({
-        start: { x: margin, y: orgDividerY },
-        end: { x: LABEL_WIDTH_PT - margin, y: orgDividerY },
+        start: { x: borderInset, y: orgDividerY },
+        end: { x: LABEL_WIDTH_PT - borderInset, y: orgDividerY },
         thickness: 1,
         color: rgb(0, 0, 0),
       });

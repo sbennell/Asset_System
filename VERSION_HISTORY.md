@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.30.12] - 2026-09-10
+
+### Changed
+
+- Brother DK-22211 (Bordered) label: the horizontal divider above the Organization Name now runs edge-to-edge to the left/right border (was stopping ~0.5mm short at each end), matching how the vertical QR/text divider reaches the top border.
+
+### Technical Details
+
+- `apps/api/src/services/labelService.ts`: `createLabelPDF()` - the org-name divider line's `start`/`end` `x` changed from `margin`/`LABEL_WIDTH_PT - margin` to `borderInset`/`LABEL_WIDTH_PT - borderInset`.
+
+---
+
 ## [1.30.11] - 2026-09-10
 
 ### Changed
