@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.30.10] - 2026-09-10
+
+### Changed
+
+- Brother DK-22211 (Bordered) label: the vertical divider between the QR and text now runs the full height between the top border and the horizontal divider above the org name (was only spanning the QR's own height). Also doubled the gap between the QR and the vertical divider, since the printed result measured 0.25mm instead of the intended 0.5mm.
+
+### Technical Details
+
+- `apps/api/src/services/labelService.ts`: `createLabelPDF()` - hoisted `borderInset` and `orgDividerY` to the top of the function so both the vertical divider and the org section's horizontal divider share one Y value; the vertical divider's line now spans `LABEL_HEIGHT_PT - borderInset` to `orgDividerY` (was `qrY` to `qrY + qrSize`); its gap from the QR changed from `0.5 * MM_TO_PT` to `MM_TO_PT` (1mm).
+
+---
+
 ## [1.30.9] - 2026-09-10
 
 ### Added

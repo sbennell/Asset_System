@@ -122,6 +122,10 @@ export async function createLabelPDF(
   const opts = { ...DEFAULT_SETTINGS, ...settings };
   const isBordered = opts.labelType === 'brother-dk22211-bordered';
   const MM_TO_PT = 72 / 25.4;
+  const borderInset = 2;
+  // Org name (and the divider above it) is nudged up off the border line - shared here so
+  // the QR/text vertical divider below can reach down to that same divider line.
+  const orgDividerY = 16 + (isBordered ? MM_TO_PT : 0);
 
   // Generate QR code containing all label information
   const qrContent = buildQRContent(asset, opts);
@@ -134,7 +138,6 @@ export async function createLabelPDF(
   // 'brother-dk22211-bordered' is identical to the plain DK-22211 label except for this
   // outline, matching the visible border added to the Dymo 24mm Tape label.
   if (isBordered) {
-    const borderInset = 2;
     page.drawRectangle({
       x: borderInset,
       y: borderInset,
@@ -168,12 +171,13 @@ export async function createLabelPDF(
   });
 
   // Bordered variant gets a vertical divider between the QR and the text block, matching
-  // the vertical divider between those two areas on the Dymo 24mm Tape label.
+  // the vertical divider between those two areas on the Dymo 24mm Tape label. Runs from
+  // the top border down to the horizontal divider above the org name.
   if (isBordered) {
-    const dividerX = qrX + qrSize + 0.5 * MM_TO_PT;
+    const dividerX = qrX + qrSize + MM_TO_PT;
     page.drawLine({
-      start: { x: dividerX, y: qrY },
-      end: { x: dividerX, y: qrY + qrSize },
+      start: { x: dividerX, y: LABEL_HEIGHT_PT - borderInset },
+      end: { x: dividerX, y: orgDividerY },
       thickness: 1,
       color: rgb(0, 0, 0),
     });
@@ -296,16 +300,14 @@ export async function createLabelPDF(
     const minFontSize = 6;
 
     // Bordered variant nudges the org name up off the border line.
-    const orgYOffset = isBordered ? MM_TO_PT : 0;
-    const orgY = 4 + orgYOffset;
+    const orgY = 4 + (isBordered ? MM_TO_PT : 0);
 
     // Bordered variant gets a divider line above the org name, matching the horizontal
     // rule above the org-name row on the Dymo 24mm Tape label.
     if (isBordered) {
-      const dividerY = 16 + orgYOffset;
       page.drawLine({
-        start: { x: margin, y: dividerY },
-        end: { x: LABEL_WIDTH_PT - margin, y: dividerY },
+        start: { x: margin, y: orgDividerY },
+        end: { x: LABEL_WIDTH_PT - margin, y: orgDividerY },
         thickness: 1,
         color: rgb(0, 0, 0),
       });
