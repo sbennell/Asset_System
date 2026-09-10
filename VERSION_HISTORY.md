@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.30.9] - 2026-09-10
+
+### Added
+
+- Brother DK-22211 (Bordered) label: added a vertical divider line between the QR code and the text block (0.5mm gap from the QR, spanning the QR's height), matching the vertical divider on the Dymo 24mm Tape label.
+
+### Technical Details
+
+- `apps/api/src/services/labelService.ts`: `createLabelPDF()` - when `isBordered`, draws a `page.drawLine()` vertical divider at `qrX + qrSize + 0.5 * MM_TO_PT`, spanning from `qrY` to `qrY + qrSize`.
+
+---
+
 ## [1.30.8] - 2026-09-10
 
 ### Changed

@@ -167,6 +167,18 @@ export async function createLabelPDF(
     height: qrSize,
   });
 
+  // Bordered variant gets a vertical divider between the QR and the text block, matching
+  // the vertical divider between those two areas on the Dymo 24mm Tape label.
+  if (isBordered) {
+    const dividerX = qrX + qrSize + 0.5 * MM_TO_PT;
+    page.drawLine({
+      start: { x: dividerX, y: qrY },
+      end: { x: dividerX, y: qrY + qrSize },
+      thickness: 1,
+      color: rgb(0, 0, 0),
+    });
+  }
+
   // Assigned To name - centered at top of label, auto-fit to fill width
   const topMargin = 12; // Space from top for assigned to name
   if (opts.showAssignedTo && asset.assignedTo) {
