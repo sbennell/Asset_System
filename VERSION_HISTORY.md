@@ -4,6 +4,30 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.30.16] - 2026-09-10
+
+### Changed
+
+- Brother DK-22211 (Bordered) label: the detail text block (Item/Model/S/N/Hostname/IP) now also keeps 0.5mm clear top and bottom. The top was already clear by a wide margin; the real fix is at the bottom - when all optional fields are shown (5 lines), the last line could reach past the org-name divider, so line spacing now compresses just enough (only for the bordered variant, only when needed) to keep the last line 0.5mm clear of the divider (or the bottom border if there's no organization name).
+
+### Technical Details
+
+- `apps/api/src/services/labelService.ts`: `createLabelPDF()` - added `lineCount` (counts how many of Item/Model/Serial/Hostname/IP will actually be drawn) and `detailBottomLimit` (`orgDividerY` or `borderInset`, plus 0.5mm); `lineHeight` is now `Math.min(10, (detailStartY - detailBottomLimit) / (lineCount - 1))` when `isBordered` and more than one line is shown, otherwise the original fixed `10`.
+
+---
+
+## [1.30.15] - 2026-09-10
+
+### Changed
+
+- Brother DK-22211 (Bordered) label: detail text (Item/Model/S/N/Hostname/IP) now keeps at least 0.5mm clear of the right border, same as the Organization Name text.
+
+### Technical Details
+
+- `apps/api/src/services/labelService.ts`: `createLabelPDF()` - `textAreaWidth` (used for auto-fitting Model text and truncating the other lines) now subtracts `borderInset + 0.5 * MM_TO_PT` when `isBordered` (was the same `margin`-based width used by the plain label).
+
+---
+
 ## [1.30.14] - 2026-09-10
 
 ### Changed

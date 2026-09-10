@@ -213,13 +213,25 @@ export async function createLabelPDF(
   // Text starts after QR code. Bordered variant nudges it right by 1mm to clear the
   // vertical divider.
   const textX = qrX + qrSize + 2 + (isBordered ? MM_TO_PT : 0);
-  let textY = LABEL_HEIGHT_PT - 24; // Start below the assigned to name
+  let textY = LABEL_HEIGHT_PT - 24; // Start below the assigned to name - already >0.5mm clear of the top border
+  const detailStartY = textY;
 
   // Text styling
   const fontSize = 8;
   const boldFontSize = 9;
-  const lineHeight = 10;
-  const textAreaWidth = LABEL_WIDTH_PT - textX - margin; // Available width for text
+  // Bordered variant keeps the last detail line at least 0.5mm clear of whatever's below
+  // it (the org-name divider, or the bottom border if there's no org name), compressing
+  // line spacing only as much as the worst-case (all optional fields shown) requires.
+  const lineCount = 1 + (asset.model ? 1 : 0) + (asset.serialNumber ? 1 : 0)
+    + (opts.showHostname && asset.hostname ? 1 : 0) + (opts.showIpAddress && asset.ipAddress ? 1 : 0);
+  const detailBottomLimit = isBordered
+    ? (asset.organizationName ? orgDividerY : borderInset) + 0.5 * MM_TO_PT
+    : -Infinity;
+  const lineHeight = isBordered && lineCount > 1
+    ? Math.min(10, (detailStartY - detailBottomLimit) / (lineCount - 1))
+    : 10;
+  // Bordered variant keeps the detail text at least 0.5mm clear of the right border.
+  const textAreaWidth = LABEL_WIDTH_PT - textX - (isBordered ? borderInset + 0.5 * MM_TO_PT : margin);
 
   // Item Number with prefix - bold and larger
   page.drawText(truncateText(`Item: ${asset.itemNumber}`, 28), {
