@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.30.14] - 2026-09-10
+
+### Changed
+
+- Brother DK-22211 (Bordered) label: reverted 1.30.13 - the divider above Organization Name is edge-to-edge with the border again. The 0.5mm gap from the border was meant for the Organization Name *text* itself, not the divider: its auto-fit width now keeps it at least 0.5mm clear of the left/right border.
+
+### Technical Details
+
+- `apps/api/src/services/labelService.ts`: `createLabelPDF()` - org-name divider line's `start`/`end` `x` reverted to `borderInset`/`LABEL_WIDTH_PT - borderInset`; the org text's `availableWidth` (used to auto-fit its font size) is now `LABEL_WIDTH_PT - (borderInset + 0.5 * MM_TO_PT) * 2` when `isBordered` (was the same `margin`-based width used by the plain label).
+
+---
+
 ## [1.30.13] - 2026-09-10
 
 ### Changed

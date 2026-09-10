@@ -296,7 +296,10 @@ export async function createLabelPDF(
   // Organization Name - centered at bottom, auto-fit to fill width
   if (asset.organizationName) {
     const orgText = asset.organizationName;
-    const availableWidth = LABEL_WIDTH_PT - (margin * 2);
+    // Bordered variant keeps the org text at least 0.5mm clear of the left/right border.
+    const availableWidth = isBordered
+      ? LABEL_WIDTH_PT - (borderInset + 0.5 * MM_TO_PT) * 2
+      : LABEL_WIDTH_PT - (margin * 2);
     const maxFontSize = 14;
     const minFontSize = 6;
 
@@ -304,13 +307,12 @@ export async function createLabelPDF(
     const orgY = 4 + (isBordered ? MM_TO_PT : 0);
 
     // Bordered variant gets a divider line above the org name, matching the horizontal
-    // rule above the org-name row on the Dymo 24mm Tape label, with a 0.5mm gap from the
-    // left/right border.
+    // rule above the org-name row on the Dymo 24mm Tape label. Runs edge-to-edge between
+    // the left/right border, same as the vertical QR/text divider reaches the top border.
     if (isBordered) {
-      const orgDividerInset = borderInset + 0.5 * MM_TO_PT;
       page.drawLine({
-        start: { x: orgDividerInset, y: orgDividerY },
-        end: { x: LABEL_WIDTH_PT - orgDividerInset, y: orgDividerY },
+        start: { x: borderInset, y: orgDividerY },
+        end: { x: LABEL_WIDTH_PT - borderInset, y: orgDividerY },
         thickness: 1,
         color: rgb(0, 0, 0),
       });
