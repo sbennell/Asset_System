@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.30.13] - 2026-09-10
+
+### Changed
+
+- Brother DK-22211 (Bordered) label: the horizontal divider above the Organization Name now stops 0.5mm short of the left/right border (was flush against it).
+
+### Technical Details
+
+- `apps/api/src/services/labelService.ts`: `createLabelPDF()` - the org-name divider line's `start`/`end` `x` changed from `borderInset`/`LABEL_WIDTH_PT - borderInset` to `borderInset + 0.5 * MM_TO_PT`/`LABEL_WIDTH_PT - (borderInset + 0.5 * MM_TO_PT)`.
+
+---
+
 ## [1.30.12] - 2026-09-10
 
 ### Changed
