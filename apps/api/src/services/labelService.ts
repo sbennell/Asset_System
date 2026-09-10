@@ -210,8 +210,9 @@ export async function createLabelPDF(
     });
   }
 
-  // Text starts after QR code
-  const textX = qrX + qrSize + 2;
+  // Text starts after QR code. Bordered variant nudges it right by 1mm to clear the
+  // vertical divider.
+  const textX = qrX + qrSize + 2 + (isBordered ? MM_TO_PT : 0);
   let textY = LABEL_HEIGHT_PT - 24; // Start below the assigned to name
 
   // Text styling

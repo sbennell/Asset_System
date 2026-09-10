@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.30.11] - 2026-09-10
+
+### Changed
+
+- Brother DK-22211 (Bordered) label: detail text (Item/Model/S/N/Hostname/IP) shifted right by 1mm to clear the vertical divider between the QR and text.
+
+### Technical Details
+
+- `apps/api/src/services/labelService.ts`: `createLabelPDF()` - `textX` now `qrX + qrSize + 2 + MM_TO_PT` when `isBordered` (was `qrX + qrSize + 2` for both variants).
+
+---
+
 ## [1.30.10] - 2026-09-10
 
 ### Changed
