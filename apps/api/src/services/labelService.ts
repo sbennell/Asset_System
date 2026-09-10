@@ -213,7 +213,9 @@ export async function createLabelPDF(
   // Text starts after QR code. Bordered variant nudges it right by 1mm to clear the
   // vertical divider.
   const textX = qrX + qrSize + 2 + (isBordered ? MM_TO_PT : 0);
-  let textY = LABEL_HEIGHT_PT - 24; // Start below the assigned to name - already >0.5mm clear of the top border
+  // Start below the assigned to name. Bordered variant adds another 0.5mm of clearance
+  // from the top border on top of the existing margin.
+  let textY = LABEL_HEIGHT_PT - 24 - (isBordered ? 0.5 * MM_TO_PT : 0);
   const detailStartY = textY;
 
   // Text styling

@@ -4,6 +4,18 @@ All notable changes to the Asset Management System are documented in this file.
 
 ---
 
+## [1.30.17] - 2026-09-10
+
+### Changed
+
+- Brother DK-22211 (Bordered) label: detail text block (Item/Model/S/N/Hostname/IP) starts another 0.5mm lower, adding to its existing clearance from the top border.
+
+### Technical Details
+
+- `apps/api/src/services/labelService.ts`: `createLabelPDF()` - `textY`'s initial value now subtracts an additional `0.5 * MM_TO_PT` when `isBordered`.
+
+---
+
 ## [1.30.16] - 2026-09-10
 
 ### Changed
